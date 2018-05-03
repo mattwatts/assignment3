@@ -26,7 +26,9 @@ PVector shipLocation,
         // current location of laser
         laserLocation,
         // current velocity of laser
-        laserVelocity;
+        laserVelocity,
+        // location of ship explosion
+        shipExplosionLocation;
       // current direction (bearing) of ship
 float shipDirection,
       // current acceleration of ship
@@ -49,7 +51,11 @@ int score=0,
     // how long is segment size on ship triangle: this is a placeholder until ship graphic introduced
     shipSize = 10,
     // determines how quickly ship turns when left and right arrow pressed
-    shipDirectionResponseConstant = 50;
+    shipDirectionResponseConstant = 50,
+    // detection radius for "is asteroid close to display centre"
+    centreRadius = 100,
+    // gameMode: 0="in progress", 1="waiting to spawn", 2="game over"
+    gameMode = 0;
 int exhaust,
     // which ship explosion "frame" is currently displaying
     shipExplosion,
@@ -57,7 +63,7 @@ int exhaust,
     // we set it to startAsteroidCount at start of level 1
     asteroids = startAsteroidCount;
         // is the game state "over"=true, or "in progress"=false
-boolean gameOver,
+boolean //gameOver,
         // is the laser bolt firing
         laserOn;
         // is the left arrow key down?
@@ -111,30 +117,46 @@ void setup(){
 void draw(){
   // set a black background to draw on
   background(0);
+
+  if (gameMode == 1) {
+    // game mode is "waiting to spawn"
+    waitToSpawn();
+  }
   
-  // process key presses so user interface responds to user input on each frame
-  processKeyPress();
+  if (gameMode == 0) {
+    // game mode is "in progress"
+    // process key presses so user interface responds to user input on each frame
+    processKeyPress();
   
-  // draw all the elements of the game composition
-  drawLaser();
-  drawShip();
+    // draw all the elements of the game composition
+    drawLaser();
+    drawShip();
+  }
+  
   drawAsteroids();
   drawScore();
   drawExplosion();
   drawLives();
   
-  if (gameOver) {
-    // game state is "over"
+  if (gameMode == 2) {
+    // game mode is "game over"
     // display game over messages
     text("Game over",width/2-60,height/2-20);
     text("Press any key to restart",width/2-60,height/2+10);
-  } else {
-    // game state is "in progress"
-    // move the ship, laser bolt, and asteroids
+  }
+  
+  if (gameMode == 0) {
+    // game mode is "in progress"
+    // move the ship and laser bolt
     moveShip();  
     moveLaser();
-    moveAsteroids();
+  }
+  
+  // move the steroids
+  moveAsteroids();
     
+  if (gameMode == 0) {
+    // game mode is "in progress"
     // detect collision between laser and asteroids
     detectLaserCollision();
     
@@ -150,6 +172,7 @@ void initGame() {
   
   laserLocation = new PVector(0,0);
   laserVelocity = new PVector(0,0);  
+  shipExplosionLocation = new PVector(0,0);
 }
 
 void restartGame() {
@@ -161,7 +184,7 @@ void restartGame() {
   shipLocation.y = height/2;
   
   // set game state to "in progress"
-  gameOver = false;
+  gameMode = 0;
   // set laser to "not firing"
   laserOn = false;
   // set exhaust to off
@@ -184,7 +207,7 @@ void drawScore() {
   // write the score
   text("Score: " + score,10,30);
   text("Level: " + level,10,60);
-  text("lives: " + lives,10,90);
+  text("lives: " + livesRemaining,10,90);
 }
 
 void drawLives() {
@@ -193,15 +216,10 @@ void drawLives() {
  pushMatrix();
  translate(1,1);
  //rotate(1.5*PI);
- for (int i=0;i<lives;i++) {
+ for (int i=0;i<livesRemaining;i++) {
    polygon(10+(i*20),120, shipSize, 3);
  }
- //polygon(10,120, shipSize, 3);  // Triangle to act as a life counter
- //polygon(30,120, shipSize, 3);
- //polygon(50,120, shipSize, 3);
- //polygon(70,120, shipSize, 3);
- popMatrix();
- 
+ popMatrix(); 
 }
 
 void initAsteroids() {
@@ -394,7 +412,7 @@ void drawExplosion() {
     // colout is red
     fill(255,0,0);
     // draw frame of ship explosion animation
-    ellipse(shipLocation.x,shipLocation.y,
+    ellipse(shipExplosionLocation.x,shipExplosionLocation.y,
             shipExplosions[shipExplosion-1],shipExplosions[shipExplosion-1]);
     // move to next frame of the ship explosion animation
     shipExplosion--;
@@ -419,6 +437,58 @@ void drawExplosion() {
   }
 }
 
+int detectAsteroidCentre() {
+  // use circular collision detection to see if a asteroid is "near" centre of display
+  int iReturn = 0, tolerance;
+  boolean isDead;
+  int theSize;
+  PVector thePosition = new PVector(0,0);
+  
+  for (int i=0;i<asteroids;i++) {
+    isDead = asteroidDead.get(i);
+    
+    if (! isDead) {
+      theSize = asteroidSize.get(i);
+      thePosition = asteroidPosition.get(i);
+      
+      tolerance = (asteroidSizes[theSize]/2) + centreRadius;
+      
+      //(x2-x1)^2 + (y1-y2)^2 <= (r1+r2)^2
+      if (sq(thePosition.x - (width/2)) + sq(thePosition.y - (height/2)) <= sq(tolerance)) {
+        // asteroid is near centre
+        iReturn = 1;
+      }
+    }
+  }
+  return(iReturn);
+}
+
+void waitToSpawn() {
+  // the ship is born again with a new life
+  // wait until screen centre is clear before relaunching ship
+  if (detectAsteroidCentre() == 0) {
+    // spawn ship
+    // set game mode to "in progress"
+    gameMode = 0;
+  } else {
+    // wait a bit longer
+    // do nothing
+  }
+}
+
+void nextLife() {
+  // initial ship direction is up: 1.5 pi radians is up
+  shipDirection = 1.5*PI;
+
+  // the ship is in the centre of the screen
+  shipLocation.x = width/2;
+  shipLocation.y = height/2;
+
+  // the ship is not moving
+  shipVelocity.x = 0;
+  shipVelocity.y = 0;  
+}
+
 int detectShipCollision() {
   // detect collision between ship and asteroids
   int iReturn = 0, tolerance;
@@ -440,20 +510,26 @@ int detectShipCollision() {
           shipLocation.y >= (thePosition.y-tolerance) &
           shipLocation.y <= (thePosition.y+tolerance)) {
             // ship has collided with an asteroid
-            // game is over
+            // a life is destroyed
             iReturn = 1;
-            //gameOver = true;
             // set all keys to up
             initKeys();
             // start animation of ship explosion
             shipExplosion = shipExplosions.length;
+            // set ship explosion location
+            shipExplosionLocation.x = shipLocation.x;
+            shipExplosionLocation.y = shipLocation.y;
             
             // how many lives do we have left?
             livesRemaining--;
             if (livesRemaining > 0) {
               // go to the next life
+              // game mode is "waiting to spawn"
+              gameMode = 1;
+              nextLife();
             } else {
-              gameOver = true;
+              // game mode is "game over"
+              gameMode = 2;
             }
       }
     }
@@ -661,16 +737,19 @@ void processKeyPress() {
 
 void keyPressed() {
   // detect when a key is pressed down
-  if (gameOver) {
+  if (gameMode == 2) {
+    // game mode is "game over"
     // when game is over, press any key to restart game
     score = 0;
     asteroidSpeed = 1;
     level = 1;
+    livesRemaining = lives;
     // initial ship direction is up: 1.5 pi radians is up
     shipDirection = 1.5*PI;
   
     restartGame();
   } else {
+    // game mode is "waiting to spawn" or "in progress"
     // when game is in progress, record relevant key presses so user interface is responsive
     if (key == CODED) {
       if (keyCode ==  LEFT) {
@@ -694,7 +773,8 @@ void keyPressed() {
 
 void keyReleased() {
   // detect when a key is realeased
-  if (!gameOver) {
+  if (gameMode != 2) {
+    // game mode is "waiting to spawn" or "in progress"
     // when game is in progress, record relevant key releases so user interface is responsive
     if (key == CODED) {
       if (keyCode ==  LEFT) {
