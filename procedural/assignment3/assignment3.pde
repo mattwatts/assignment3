@@ -18,6 +18,7 @@
 //     medium spawns 2 small
 //   asteroids get faster on level up
 //   visible exhaust from ship thrusters
+//   hello
 
         // current location of ship
 PVector shipLocation,
