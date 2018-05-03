@@ -109,7 +109,7 @@ class Asteroid{
     } else if(startSide == 1){   // 1 = Bottom side of screen
       this.setLocation();
     } else if(startSide == 2){   // 2 = Left side of screen
-      this.setLocation()
+      this.setLocation();
     } else {                     // 3 = Top side of screen
       
     }
