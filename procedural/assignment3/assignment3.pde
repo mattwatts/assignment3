@@ -63,9 +63,7 @@ int exhaust,
     // how many asteroids currently exist?
     // we set it to startAsteroidCount at start of level 1
     asteroids = startAsteroidCount;
-        // is the game state "over"=true, or "in progress"=false
-boolean //gameOver,
-        // is the laser bolt firing
+boolean // is the laser bolt firing
         laserOn;
         // is the left arrow key down?
 boolean leftPressed = false,
@@ -89,9 +87,11 @@ ArrayList<Float> asteroidDirection = new ArrayList<Float>();
 ArrayList<Integer> asteroidSize = new ArrayList<Integer>();
 // which asteroid explosion "frame" is currently displaying
 ArrayList<Integer> asteroidExplosion =  new ArrayList<Integer>();
+// how fast is the asteroid travelling
+//ArrayList<Integer> asteroidSpeed =  new ArrayList<Integer>();
 // what is the diameter for each asteroid circle: large=100, medium=50, small=25
 // this is a placeholder until asteroid graphics introduced
-int[] asteroidSizes = {100,50,25};
+int[] asteroidSizes = {75,50,25};
 // how many points for shooting each asteroid size: large=25, medium=50, small=100
 int[] scores = {25,50,100};
 // each element of this array is a ship explosion "frame"
@@ -102,8 +102,7 @@ int[] shipExplosions = {500,450,400,350,300,250,200,150,100,50};
 int[] asteroidExplosions = {250,225,200,175,150,125,100,75,50,25};
 
 void setup(){
-  //size(900,1200);
-  size(900,900);
+  size(600,800);
   
   // set the font size for displaying score
   textSize(26);
@@ -129,11 +128,12 @@ void draw(){
     // process key presses so user interface responds to user input on each frame
     processKeyPress();
   
-    // draw all the elements of the game composition
+    // laser bolt and ship
     drawLaser();
     drawShip();
   }
   
+  // draw remaining elements of the game composition
   drawAsteroids();
   drawScore();
   drawExplosion();
@@ -206,19 +206,19 @@ void drawScore() {
   fill(0,0,255);
   
   // write the score
-  text("Score: " + score,10,30);
-  text("Level: " + level,10,60);
-  text("lives: " + livesRemaining,10,90);
+  text(score,10,30);
+  text("Level " + level,10,60);
+  //text("lives: " + livesRemaining,10,90);
 }
 
 void drawLives() {
- // purpose: draw the number of lives remainig as ship icons
+ // purpose: draw the number of lives remaining as ship icons
  fill(0,255,0);
  pushMatrix();
  translate(1,1);
  //rotate(1.5*PI);
- for (int i=0;i<livesRemaining;i++) {
-   polygon(10+(i*20),120, shipSize, 3);
+ for (int i=0;i<livesRemaining-1;i++) {
+   polygon(20+(i*20),80, shipSize, 3);
  }
  popMatrix(); 
 }
