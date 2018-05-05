@@ -102,7 +102,8 @@ int[] shipExplosions = {500,450,400,350,300,250,200,150,100,50};
 int[] asteroidExplosions = {250,225,200,175,150,125,100,75,50,25};
 
 void setup(){
-  size(600,800);
+  //size(600,800);
+  size(500,650);
   
   // set the font size for displaying score
   textSize(26);
@@ -143,7 +144,7 @@ void draw(){
     // game mode is "game over"
     // display game over messages
     text("Game over",width/2-60,height/2-20);
-    text("Press any key to restart",width/2-60,height/2+10);
+    text("Press any key to restart",width/2-130,height/2+10);
   }
   
   if (gameMode == 0) {
