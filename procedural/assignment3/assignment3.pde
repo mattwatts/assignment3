@@ -23,6 +23,7 @@
 //   ship has multiple lives
 //   ship resets to stationary at screen centre on new life
 //   ship waits until screen centre is clear of asteroids before spawning new life
+//   if the spawning waits too long without centre becoming clear, the ship spawns anyway
 //   ship can have multiple laser bolts in flight simultaneously
 //   there's a slight pause before the ship can fire another laser bolt
 //   laser bolts travel for a number of pixels equal to screen height
@@ -47,6 +48,7 @@ ArrayList<Integer> laserOn = new ArrayList<Integer>();
       // determines how fast the laser bolt moves
 float laserSpeed = 15,
       // determines how much thrust happens when up and down arrow pressed
+      // pixels per frame per frame ship acceleration
       thrustConstant = 0.2,
       // determines how fast large asteroids move on level 1
       asteroidStartSpeed = 1,
@@ -60,7 +62,7 @@ int score=0,
     lives=4,
     // how many lives are currently remaining?
     livesRemaining = lives,
-    // how big is the laser bolt?
+    // diameter of a laser bolt
     laserSize = 10,
     // how many asteroids does level 1 start with?
     startAsteroidCount = 4,
@@ -73,20 +75,28 @@ int score=0,
     shipTurnSpeed = 50,
     // detection radius for "is asteroid close to display centre"
     centreRadius = 100,
+    // if the spawning waits too long without centre becoming clear, the ship spawns anyway
+    // how many frames must pass before a new ship is forced to spawn
+    spawnWaitLimit = 300,
     // gameMode: 0="in progress", 1="waiting to spawn", 2="game over"
     gameMode = 0,
     // how many frames must pass before laser fires again
     laserFireFrames = 20,
     // how many frames have elapsed since laser bolt was fired
-    framesSinceFire = laserFireFrames + 1;
+    framesSinceFire = laserFireFrames + 1,
+    // how many frames must pass before a new game can start
+    endGameFrames = 20;
+    //
 int exhaust,
     // which ship explosion "frame" is currently displaying
     shipExplosion,
     // how many asteroids currently exist?
     // we set it to startAsteroidCount at start of level 1
-    asteroids = startAsteroidCount;
-//boolean // is the laser bolt firing
-        //laserOn;
+    asteroids = startAsteroidCount,
+    // how long have we been waiting for new ship to spawn?
+    spawnWait,
+    // how long have we been waiting for the new game to start
+    endGameWait;
         // is the left arrow key down?
 boolean leftPressed = false,
         // is the right arrow key down?
@@ -133,6 +143,8 @@ void setup(){
   // initial ship direction is up: 1.5 pi radians is up
   shipDirection = 1.5*PI;
   
+  frameRate(30);
+  
   initGame();
   restartGame();
 }
@@ -167,6 +179,8 @@ void draw(){
     // display game over messages
     text("Game over",width/2-60,height/2-20);
     text("Press any key to restart",width/2-130,height/2+10);
+    // increment end game timer
+    endGameWait++;
   }
   
   if (gameMode == 0) {
@@ -482,10 +496,22 @@ boolean detectAsteroidCentre() {
       
       tolerance = (asteroidSizes[theSize]/2) + centreRadius;
       
-      //(x2-x1)^2 + (y1-y2)^2 <= (r1+r2)^2
+      // circular collision detection:
+      // (x2-x1)^2 + (y1-y2)^2 <= (r1+r2)^2
       if (sq(thePosition.x - (width/2)) + sq(thePosition.y - (height/2)) <= sq(tolerance)) {
         // asteroid is near centre
         fReturn = true;
+      }
+      
+      spawnWait++;
+      println(spawnWait);
+      
+      if (spawnWait > spawnWaitLimit) {
+        // we've waited too long
+        // spawn the ship anyway
+        fReturn = false;
+        spawnWait = 0;
+        println("spawn anyway");
       }
     }
   }
@@ -495,6 +521,8 @@ boolean detectAsteroidCentre() {
 void waitToSpawn() {
   // the ship is born again with a new life
   // wait until screen centre is clear before relaunching ship
+
+  // detect if the area around the display centre is free of asteroids
   if (!detectAsteroidCentre()) {
     // spawn ship
     // set game mode to "in progress"
@@ -553,10 +581,15 @@ boolean detectShipCollision() {
               // go to the next life
               // game mode is "waiting to spawn"
               gameMode = 1;
+              // reset the waiting to spawn timer
+              spawnWait = 0;
+              // reset the ship parameters for a new life
               nextLife();
             } else {
               // game mode is "game over"
               gameMode = 2;
+              // reset end game timer
+              endGameWait = 0;
             }
       }
     }
@@ -847,14 +880,17 @@ void keyPressed() {
   // detect when a key is pressed down
   if (gameMode == 2) {
     // game mode is "game over"
-    // when game is over, press any key to restart game
-    score = 0;
-    level = 1;
-    livesRemaining = lives;
-    // initial ship direction is up: 1.5 pi radians is up
-    shipDirection = 1.5*PI;
+    println(endGameWait);
+    if (endGameWait > endGameFrames) {
+      // when game is over, press any key to restart game
+      score = 0;
+      level = 1;
+      livesRemaining = lives;
+      // initial ship direction is up: 1.5 pi radians is up
+      shipDirection = 1.5*PI;
   
-    restartGame();
+      restartGame();
+    }
   } else {
     // game mode is "waiting to spawn" or "in progress"
     // when game is in progress, record relevant key presses so user interface is responsive
