@@ -23,6 +23,9 @@
 //   ship has multiple lives
 //   ship resets to stationary at screen centre on new life
 //   ship waits until screen centre is clear of asteroids before spawning new life
+//   ship can have multiple laser bolts in flight simultaneously
+//   laser bolts travel for a number of pixels equal to screen height
+//   more asteroids appear on level up
 
         // current location of ship
 PVector shipLocation,
