@@ -24,6 +24,7 @@
 //   ship resets to stationary at screen centre on new life
 //   ship waits until screen centre is clear of asteroids before spawning new life
 //   ship can have multiple laser bolts in flight simultaneously
+//   there's a slight pause before the ship can fire another laser bolt
 //   laser bolts travel for a number of pixels equal to screen height
 //   more asteroids appear on level up
 
@@ -49,7 +50,7 @@ float laserSpeed = 15,
       thrustConstant = 0.2,
       // determines how fast large asteroids move on level 1
       asteroidStartSpeed = 1,
-      // determins how fast asteroid speed increases with difficulty increase
+      // determines how fast asteroid speed increases with difficulty increase
       asteroidSpeedChange = 0.25;
     // score is zero at start of level 1
 int score=0,
