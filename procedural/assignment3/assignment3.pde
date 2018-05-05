@@ -60,6 +60,8 @@ int score=0,
     laserSize = 10,
     // how many asteroids does level 1 start with?
     startAsteroidCount = 4,
+    // how many extra asteroids on new levels
+    asteroidLevelUp = 2,
     // how long is segment size on ship triangle
     // this is a placeholder until ship graphic introduced
     shipSize = 10,
@@ -245,7 +247,7 @@ void initAsteroids() {
   int theSize = 0, // asteroid is large size
       theExplosion = 0; // asteroid is not exploding
   
-  asteroids = startAsteroidCount;  
+  asteroids = startAsteroidCount + ((level - 1) * asteroidLevelUp);  
   asteroidPosition.clear();
   asteroidDead.clear();
   asteroidDirection.clear();
@@ -620,8 +622,8 @@ void asteroidHit(int iAsteroid) {
   if (deadAsteroids == asteroids) {
     // all asteroids are dead - no live asteroids left
     // we move to the next level
-    restartGame();
     level++;
+    restartGame();
   }
 }
 
