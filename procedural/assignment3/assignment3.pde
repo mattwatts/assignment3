@@ -18,53 +18,69 @@
 //     medium spawns 2 small
 //   asteroids get faster on level up
 //   visible exhaust from ship thrusters
-//   hello
+//   medium asteroids are faster than larger asteroids
+//   small asteroids are faster than medium asteroids
+//   ship has multiple lives
+//   ship resets to stationary at screen centre on new life
+//   ship waits until screen centre is clear of asteroids before spawning new life
 
         // current location of ship
 PVector shipLocation,
         // current velocity of ship
         shipVelocity,
-        // current location of laser
-        laserLocation,
-        // current velocity of laser
-        laserVelocity,
         // location of ship explosion
         shipExplosionLocation;
       // current direction (bearing) of ship
 float shipDirection,
       // current acceleration of ship
       acceleration;
+// current locations of laser bolts
+ArrayList<PVector> laserLocation = new ArrayList<PVector>();
+// current velocity of laser bolts
+ArrayList<PVector> laserVelocity = new ArrayList<PVector>();
+// time remaining for laser bolts
+ArrayList<Integer> laserOn = new ArrayList<Integer>();
       // determines how fast the laser bolt moves
 float laserSpeed = 15,
       // determines how much thrust happens when up and down arrow pressed
       thrustConstant = 0.2,
-      // determines how fast asteroids move on level 1
-      asteroidSpeed = 1;
+      // determines how fast large asteroids move on level 1
+      asteroidStartSpeed = 1,
+      // determins how fast asteroid speed increases with difficulty increase
+      asteroidSpeedChange = 0.25;
+    // score is zero at start of level 1
 int score=0,
+    // game starts at level 1
     level=1,
     // how many lives do you have
     lives=4,
+    // how many lives are currently remaining?
     livesRemaining = lives,
     // how big is the laser bolt?
     laserSize = 10,
     // how many asteroids does level 1 start with?
     startAsteroidCount = 4,
-    // how long is segment size on ship triangle: this is a placeholder until ship graphic introduced
+    // how long is segment size on ship triangle
+    // this is a placeholder until ship graphic introduced
     shipSize = 10,
     // determines how quickly ship turns when left and right arrow pressed
-    shipDirectionResponseConstant = 50,
+    shipTurnSpeed = 50,
     // detection radius for "is asteroid close to display centre"
     centreRadius = 100,
     // gameMode: 0="in progress", 1="waiting to spawn", 2="game over"
-    gameMode = 0;
+    gameMode = 0,
+    // how many frames must pass before laser fires again
+    laserFireFrames = 20,
+    // how many frames have elapsed since laser bolt was fired
+    framesSinceFire = laserFireFrames + 1;
 int exhaust,
     // which ship explosion "frame" is currently displaying
     shipExplosion,
     // how many asteroids currently exist?
     // we set it to startAsteroidCount at start of level 1
     asteroids = startAsteroidCount;
-boolean // is the laser bolt firing
-        laserOn;
+//boolean // is the laser bolt firing
+        //laserOn;
         // is the left arrow key down?
 boolean leftPressed = false,
         // is the right arrow key down?
@@ -88,7 +104,7 @@ ArrayList<Integer> asteroidSize = new ArrayList<Integer>();
 // which asteroid explosion "frame" is currently displaying
 ArrayList<Integer> asteroidExplosion =  new ArrayList<Integer>();
 // how fast is the asteroid travelling
-//ArrayList<Integer> asteroidSpeed =  new ArrayList<Integer>();
+ArrayList<Float> asteroidSpeed =  new ArrayList<Float>();
 // what is the diameter for each asteroid circle: large=100, medium=50, small=25
 // this is a placeholder until asteroid graphics introduced
 int[] asteroidSizes = {75,50,25};
@@ -172,8 +188,6 @@ void initGame() {
   // pass 2 parameters to the PVector constructor so processing knows it's 2 dimensional
   shipLocation = new PVector(0,0); 
   
-  laserLocation = new PVector(0,0);
-  laserVelocity = new PVector(0,0);  
   shipExplosionLocation = new PVector(0,0);
 }
 
@@ -188,7 +202,7 @@ void restartGame() {
   // set game state to "in progress"
   gameMode = 0;
   // set laser to "not firing"
-  laserOn = false;
+  //laserOn = false;
   // set exhaust to off
   exhaust = 0;
   // set ship expolosion animation to off
@@ -226,7 +240,7 @@ void drawLives() {
 
 void initAsteroids() {
   // create new asteroid set for the start of a level
-  float theDirection;
+  float theDirection, theSpeed;
   boolean isDead = false;
   int theSize = 0, // asteroid is large size
       theExplosion = 0; // asteroid is not exploding
@@ -237,6 +251,7 @@ void initAsteroids() {
   asteroidDirection.clear();
   asteroidSize.clear();
   asteroidExplosion.clear();
+  asteroidSpeed.clear();
   
   // initialise the asteroids location, direction, status and sizes
   for (int i=0;i<asteroids;i++) {
@@ -263,12 +278,16 @@ void initAsteroids() {
     // random y can be anywhere on the screen
     thePosition.y = random(height);
     
+    // speed of large asteroids increases by asteroidSpeedChange on each level
+    theSpeed = asteroidStartSpeed + ((level-1) * asteroidSpeedChange);
+    
     // add values for this asteroid to the arrays
     asteroidPosition.add(thePosition);
     asteroidDead.add(isDead);
     asteroidDirection.add(theDirection);
     asteroidSize.add(theSize);
     asteroidExplosion.add(theExplosion);
+    asteroidSpeed.add(theSpeed);
   }
 }
 
@@ -295,7 +314,7 @@ void drawAsteroids() {
 
 void moveAsteroids() {
   // move the asteroids
-  float theDirection;
+  float theDirection, theSpeed;
   boolean isDead;
   PVector thePosition = new PVector(0,0);
   
@@ -305,10 +324,11 @@ void moveAsteroids() {
     if (! isDead) {
       thePosition = asteroidPosition.get(i);
       theDirection = asteroidDirection.get(i);
+      theSpeed = asteroidSpeed.get(i);
       
       // move asteroid
-      thePosition.x += cos(theDirection)*asteroidSpeed;
-      thePosition.y += sin(theDirection)*asteroidSpeed;
+      thePosition.x += cos(theDirection)*theSpeed;
+      thePosition.y += sin(theDirection)*theSpeed;
       
       // wrap asteroid around the edges of the screen
       if (thePosition.x > (width-1)) {
@@ -439,10 +459,11 @@ void drawExplosion() {
   }
 }
 
-int detectAsteroidCentre() {
+boolean detectAsteroidCentre() {
   // use circular collision detection to see if a asteroid is "near" centre of display
-  int iReturn = 0, tolerance;
+  int tolerance;
   boolean isDead;
+  boolean fReturn = false;
   int theSize;
   PVector thePosition = new PVector(0,0);
   
@@ -458,23 +479,20 @@ int detectAsteroidCentre() {
       //(x2-x1)^2 + (y1-y2)^2 <= (r1+r2)^2
       if (sq(thePosition.x - (width/2)) + sq(thePosition.y - (height/2)) <= sq(tolerance)) {
         // asteroid is near centre
-        iReturn = 1;
+        fReturn = true;
       }
     }
   }
-  return(iReturn);
+  return(fReturn);
 }
 
 void waitToSpawn() {
   // the ship is born again with a new life
   // wait until screen centre is clear before relaunching ship
-  if (detectAsteroidCentre() == 0) {
+  if (!detectAsteroidCentre()) {
     // spawn ship
     // set game mode to "in progress"
     gameMode = 0;
-  } else {
-    // wait a bit longer
-    // do nothing
   }
 }
 
@@ -491,10 +509,11 @@ void nextLife() {
   shipVelocity.y = 0;  
 }
 
-int detectShipCollision() {
+boolean detectShipCollision() {
   // detect collision between ship and asteroids
-  int iReturn = 0, tolerance;
+  int tolerance;
   boolean isDead;
+  boolean fReturn = false;
   int theSize;
   PVector thePosition = new PVector(0,0);
   
@@ -513,7 +532,7 @@ int detectShipCollision() {
           shipLocation.y <= (thePosition.y+tolerance)) {
             // ship has collided with an asteroid
             // a life is destroyed
-            iReturn = 1;
+            fReturn = true;
             // set all keys to up
             initKeys();
             // start animation of ship explosion
@@ -536,10 +555,10 @@ int detectShipCollision() {
       }
     }
   }
-  return(iReturn);
+  return(fReturn);
 }
 
-void spawnAsteroid(float positionX, float positionY, int iAsteroidSize) {
+void spawnAsteroid(float positionX, float positionY, float theSpeed, int theSize) {
   // spawn a baby asteroid
   // asteroid moving in a random direction
   float theDirection = random(2*PI);
@@ -554,9 +573,11 @@ void spawnAsteroid(float positionX, float positionY, int iAsteroidSize) {
   // add this asteroids attributes to the ArrayList's
   asteroidPosition.add(thePosition);
   asteroidDirection.add(theDirection);
-  asteroidSize.add(iAsteroidSize);
+  asteroidSize.add(theSize);
   asteroidDead.add(isDead);
   asteroidExplosion.add(theExplosion);
+  // asteroid speed increases by asteroidSpeedChange when it decreases in size
+  asteroidSpeed.add(theSpeed+asteroidSpeedChange);
 }
 
 void asteroidHit(int iAsteroid) {
@@ -565,24 +586,26 @@ void asteroidHit(int iAsteroid) {
   boolean isDead;
   int theSize;
   PVector thePosition = new PVector(0,0);
+  float theSpeed;
 
   // increase the score
   theSize = asteroidSize.get(iAsteroid);
   score += scores[theSize];
   
-  // get the position of the hit asteroid
+  // get the position and speed of the hit asteroid
   thePosition = asteroidPosition.get(iAsteroid);
+  theSpeed = asteroidSpeed.get(iAsteroid);
   
   // spawn new asteroids
   if (theSize == 0) {
     // large asteroid destroyed: spawn 2 medium asteroids
-    spawnAsteroid(thePosition.x,thePosition.y,1);
-    spawnAsteroid(thePosition.x,thePosition.y,1);
+    spawnAsteroid(thePosition.x,thePosition.y,theSpeed,1);
+    spawnAsteroid(thePosition.x,thePosition.y,theSpeed,1);
   }
   if (theSize == 1) {
     // medium asteroid destroyed: spawn 2 small asteroids
-    spawnAsteroid(thePosition.x,thePosition.y,2);
-    spawnAsteroid(thePosition.x,thePosition.y,2);
+    spawnAsteroid(thePosition.x,thePosition.y,theSpeed,2);
+    spawnAsteroid(thePosition.x,thePosition.y,theSpeed,2);
   }
   // if small asteroid destroyed, we spawn nothing
   
@@ -597,55 +620,64 @@ void asteroidHit(int iAsteroid) {
   if (deadAsteroids == asteroids) {
     // all asteroids are dead - no live asteroids left
     // we move to the next level
-    // asteroids speed up on each level
-    asteroidSpeed += 0.25;
     restartGame();
     level++;
   }
 }
 
-int detectLaserCollision() {
+boolean detectLaserCollision() {
   // detect collision between laser and asteroids
-  int iReturn = 0, tolerance;
+  int tolerance, isLaserOn;
+  int iHit = 0;
   boolean isDead;
+  boolean fReturn = false;
   int theSize, theExplosion;
   PVector thePosition = new PVector(0,0);
+  PVector theLocation = new PVector(0,0);
 
   for (int i=0;i<asteroids;i++) {
     isDead = asteroidDead.get(i);
-    if ((! isDead) & (laserOn)) {
-      theSize = asteroidSize.get(i);
+    if ((! isDead) & (laserLocation.size() > 0)) {
+      for (int j=0;j<laserLocation.size();j++) {
+        isLaserOn = laserOn.get(j);
+        if (isLaserOn > 0) {
+          theSize = asteroidSize.get(i);
       
-      tolerance = (asteroidSizes[theSize]/2) + (laserSize/2);
+          tolerance = (asteroidSizes[theSize]/2) + (laserSize/2);
       
-      thePosition = asteroidPosition.get(i);
+          thePosition = asteroidPosition.get(i);
+          theLocation = laserLocation.get(j);
       
-      if (laserLocation.x >= (thePosition.x-tolerance) &
-          laserLocation.x <= (thePosition.x+tolerance) &
-          laserLocation.y >= (thePosition.y-tolerance) &
-          laserLocation.y <= (thePosition.y+tolerance)) {
-            // laser hits asteroid
-            iReturn = i+1;
-            laserOn = false;
+          if (theLocation.x >= (thePosition.x-tolerance) &
+              theLocation.x <= (thePosition.x+tolerance) &
+              theLocation.y >= (thePosition.y-tolerance) &
+              theLocation.y <= (thePosition.y+tolerance)) {
+                // laser hits asteroid
+                fReturn = true;
+                isLaserOn = 0;
+                laserOn.set(j,isLaserOn);
+                iHit = i;
 
-            // destroy the asteroid
-            isDead = true;
-            asteroidDead.set(i,isDead);
+                // destroy the asteroid
+                isDead = true;
+                asteroidDead.set(i,isDead);
             
-            // asteroid is exploding
-            // start asteroid explosion animation
-            theExplosion = asteroidExplosions.length;
-            asteroidExplosion.set(i,theExplosion);
+                // asteroid is exploding
+                // start asteroid explosion animation
+                theExplosion = asteroidExplosions.length;
+                asteroidExplosion.set(i,theExplosion);
+          }
+        }
       }
     }
   }
   
-  if (iReturn > 0) {
+  if (fReturn) {
     // asteroid iReturn was hit
-    asteroidHit(iReturn-1);
+    asteroidHit(iHit);
   }
   
-  return(iReturn);
+  return(fReturn);
 }
 
 // this function is a placeholder only until we substitute in ship graphics
@@ -661,36 +693,103 @@ void polygon(float x, float y, float radius, int npoints) {
 }
 
 void drawLaser() {
-  // draw the laser bolt
-  if (laserOn) {
-    // colour is red
-    fill(255,0,0);
-    ellipse(laserLocation.x,laserLocation.y,laserSize,laserSize);
+  // draw the laser bolts
+  PVector theLocation = new PVector(0,0);
+  int isLaserOn;
+  
+  if (laserLocation.size() > 0) {
+    for (int i=0;i<laserLocation.size();i++) {
+      isLaserOn = laserOn.get(i);
+      if (isLaserOn > 0) {
+        theLocation = laserLocation.get(i);
+        // colour is red
+        fill(255,0,0);
+        ellipse(theLocation.x,theLocation.y,laserSize,laserSize);
+        // decriment life of this laser bolt
+        isLaserOn--;
+        laserOn.set(i,isLaserOn);
+      }
+    }
   }
 }
 
 void moveLaser() {
   // move the laser bolt
-  if (laserOn) {
-    // update laser location
-    laserLocation.add(laserVelocity);
-    
-    // switch laser off when it reaches the edge of the screen
-    if (laserLocation.x < 0 | laserLocation.x > (width-1) |
-        laserLocation.y < 0 | laserLocation.y > (height-1)) {      
-       laserOn = false;
+  PVector theLocation = new PVector(0,0);
+  PVector theVelocity = new PVector(0,0);
+  int isLaserOn;
+  
+  if (laserLocation.size() > 0) {
+    // traverse array in reverse order because we might drop elements from the array
+    for (int i=laserLocation.size()-1;i>=0;i--) {
+      isLaserOn = laserOn.get(i);
+      if (isLaserOn > 0) {
+        // get the laser bolts location and velocity
+        theLocation = laserLocation.get(i);
+        theVelocity = laserVelocity.get(i);
+        
+        // update laser location
+        theLocation.add(theVelocity);
+        
+        // wrap laser around display when it reaches the edge of the display
+        if (theLocation.x < 0) {
+          theLocation.x += width;
+        }
+        if (theLocation.x > (width-1)) {
+          theLocation.x -= width;
+        }
+        if (theLocation.y < 0) {
+          theLocation.y += height;
+        }
+        if (theLocation.y > (height-1)) {
+          theLocation.y -= height;
+        }
+        
+        // store the new laser bolts location
+        laserLocation.set(i,theLocation);
+        
+        // decriment laserOn for the laser bolt
+        // laser bolt travels for a number of frames, then dies
+        isLaserOn--;
+        
+        // remove laser bolts where laserOn is zero
+        // the laser bolt has travelled for allowed number of frames, or has hit an asteroid
+        if (isLaserOn < 1) {
+          laserLocation.remove(i);
+          laserVelocity.remove(i);
+          laserOn.remove(i);
+        }
+      }
     }
-  }  
+  }
+  
+  // increment framesSinceFire
+  // when we fire a laser bolt, we wait for a bit before another one can fire
+  framesSinceFire++;
 }
 
 void fireLaser() {
   // create a laser bolt
-  laserLocation.x = shipLocation.x;
-  laserLocation.y = shipLocation.y;
-  laserVelocity.x = (cos(shipDirection) * laserSpeed) + shipVelocity.x;
-  laserVelocity.y = (sin(shipDirection) * laserSpeed) + shipVelocity.y;
+  PVector theLocation = new PVector(0,0);
+  PVector theVelocity = new PVector(0,0);
+  int isLaserOn;
   
-  laserOn = true;
+  // laser bolt has the ships velocity and location
+  theLocation.x = shipLocation.x;
+  theLocation.y = shipLocation.y;
+  theVelocity.x = (cos(shipDirection) * laserSpeed) + shipVelocity.x;
+  theVelocity.y = (sin(shipDirection) * laserSpeed) + shipVelocity.y;
+  
+  // laser bolt travels for a number of frames equal to the width of the screen
+  isLaserOn = round(width/laserSpeed);
+  
+  // store the laser bolts attributes
+  laserLocation.add(theLocation);
+  laserVelocity.add(theVelocity);
+  laserOn.add(isLaserOn);
+  
+  // we have just fired a laser bolt, so wait for a bit before another one can fire
+  framesSinceFire = 0;
 }
 
 void initKeys() {
@@ -707,14 +806,14 @@ void processKeyPress() {
   // this allows us to have fluid and multiple simultaneous key presses
   if (leftPressed) {
     // left arrow key, turn left
-    shipDirection -= PI/shipDirectionResponseConstant;
+    shipDirection -= PI/shipTurnSpeed;
     if (shipDirection < 0) {
       shipDirection = 2*PI;
     }    
   }
   if (rightPressed) {
     // right arrow key, turn right
-    shipDirection += PI/shipDirectionResponseConstant;
+    shipDirection += PI/shipTurnSpeed;
     if (shipDirection > (2*PI)) {
       shipDirection = 0;
     }    
@@ -731,7 +830,8 @@ void processKeyPress() {
   }
   if (spacePressed) {
     // space key, fire laser
-    if (! laserOn) {
+    // we allow a laser bolt to fire every laserFireFrames frames
+    if (framesSinceFire > laserFireFrames) {
       fireLaser();
     }
   }
@@ -743,7 +843,6 @@ void keyPressed() {
     // game mode is "game over"
     // when game is over, press any key to restart game
     score = 0;
-    asteroidSpeed = 1;
     level = 1;
     livesRemaining = lives;
     // initial ship direction is up: 1.5 pi radians is up
