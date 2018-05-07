@@ -34,7 +34,15 @@ PVector shipLocation,
         // current velocity of ship
         shipVelocity,
         // location of ship explosion
-        shipExplosionLocation;
+        shipExplosionLocation,
+        //
+        alienLocation,
+        //
+        alienVelocity,
+        //
+        alienLaserLocation,
+        //
+        alienLaserVelocity;
       // current direction (bearing) of ship
 float shipDirection,
       // current acceleration of ship
@@ -53,7 +61,9 @@ float laserSpeed = 15,
       // determines how fast large asteroids move on level 1
       asteroidStartSpeed = 1,
       // determines how fast asteroid speed increases with difficulty increase
-      asteroidSpeedChange = 0.25;
+      asteroidSpeedChange = 0.25,
+      //
+      alienSpeedChange = 0.5;
     // score is zero at start of level 1
 int score=0,
     // game starts at level 1
@@ -85,7 +95,13 @@ int score=0,
     // how many frames have elapsed since laser bolt was fired
     framesSinceFire = laserFireFrames + 1,
     // how many frames must pass before a new game can start
-    endGameFrames = 20;
+    endGameFrames = 20,
+    //
+    alienSpawnSeconds = 10,
+    //
+    alienSize = 25,
+    // level that alien first appears on
+    alienLevel = 1;
     //
 int exhaust,
     // which ship explosion "frame" is currently displaying
@@ -106,7 +122,11 @@ boolean leftPressed = false,
         // is the down arrow key down?
         downPressed = false,
         // is the space key down?
-        spacePressed = false;
+        spacePressed = false,
+        // is an alien ship visiting?
+        alienOn = false,
+        // is an alien laser firing?
+        alienLaserOn = false;
        // says what happened with game result
 String gameResult;
 // current position of asteroid
@@ -153,45 +173,35 @@ void draw(){
   // set a black background to draw on
   background(0);
 
-  if (gameMode == 1) {
-    // game mode is "waiting to spawn"
-    waitToSpawn();
-  }
+  // spawn new ship
+  waitToSpawn();
   
-  if (gameMode == 0) {
-    // game mode is "in progress"
-    // process key presses so user interface responds to user input on each frame
-    processKeyPress();
+  // process key presses so user interface responds to user input on each frame
+  processKeyPress();
   
-    // laser bolt and ship
-    drawLaser();
-    drawShip();
-  }
+  // laser bolt and ship
+  drawLaser();
+  drawShip();
   
   // draw remaining elements of the game composition
   drawAsteroids();
+  drawAlien();
   drawScore();
   drawExplosion();
   drawLives();
   
-  if (gameMode == 2) {
-    // game mode is "game over"
-    // display game over messages
-    text("Game over",width/2-60,height/2-20);
-    text("Press any key to restart",width/2-130,height/2+10);
-    // increment end game timer
-    endGameWait++;
-  }
   
-  if (gameMode == 0) {
-    // game mode is "in progress"
-    // move the ship and laser bolt
-    moveShip();  
-    moveLaser();
-  }
+  // display game over messages
+  drawGameOver();
   
-  // move the steroids
+  // game mode is "in progress"
+  // move the ship and laser bolt
+  moveShip();  
+  moveLaser();
+  
+  // move the asteroids and alien
   moveAsteroids();
+  moveAlien();
     
   if (gameMode == 0) {
     // game mode is "in progress"
@@ -209,6 +219,10 @@ void initGame() {
   shipLocation = new PVector(0,0); 
   
   shipExplosionLocation = new PVector(0,0);
+  alienLocation = new PVector(0,0);
+  alienVelocity = new PVector(0,0);
+  alienLaserLocation = new PVector(0,0);
+  alienLaserVelocity = new PVector(0,0);
 }
 
 void restartGame() {
@@ -232,6 +246,20 @@ void restartGame() {
   initAsteroids();  
 }
 
+void drawGameOver() {
+  if (gameMode == 2) {
+    // game mode is "game over"
+    // set text colour blue
+    fill(0,0,255);
+    // display game over messages
+    text("Game over",width/2-60,height/2-20);
+    text("Press any key to restart",width/2-130,height/2+10);
+    
+    // increment end game timer
+    endGameWait++;
+  }
+}
+
 void drawScore() {
 // Purpose: draw the score in Blue
 // Arguments: none
@@ -248,6 +276,7 @@ void drawScore() {
 
 void drawLives() {
  // purpose: draw the number of lives remaining as ship icons
+ // colour is green
  fill(0,255,0);
  pushMatrix();
  translate(1,1);
@@ -382,22 +411,25 @@ void accelerateShip() {
 }
 
 void moveShip() {
-  // move the ship
-  // update ship location
-  shipLocation.add(shipVelocity);
+  if (gameMode == 0) {
+    // game mode is "in progress"
+    // move the ship
+    // update ship location
+    shipLocation.add(shipVelocity);
   
-  // wrap ship around the edges of the screen
-  if (shipLocation.x > (width-1)) {
-    shipLocation.x -= width;
-  }
-  if (shipLocation.x < 0) {
-    shipLocation.x += width;
-  }
-  if (shipLocation.y > (height-1)) {
-    shipLocation.y -= height;
-  }
-  if (shipLocation.y < 0) {
-    shipLocation.y += height;
+    // wrap ship around the edges of the screen
+    if (shipLocation.x > (width-1)) {
+      shipLocation.x -= width;
+    }
+    if (shipLocation.x < 0) {
+      shipLocation.x += width;
+    }
+    if (shipLocation.y > (height-1)) {
+      shipLocation.y -= height;
+    }
+    if (shipLocation.y < 0) {
+      shipLocation.y += height;
+    }
   }
 }
 
@@ -431,18 +463,21 @@ void drawExhaust() {
 }
 
 void drawShip() {
-  // draw a triangle centred on xLoc,yLoc
-  // later, we'll substitute an image instead of a triangle
-  // https://processing.org/examples/regularpolygon.html
-  pushMatrix();
-  translate(shipLocation.x, shipLocation.y);
-  rotate(shipDirection);
-  if (exhaust > 0) {
-    drawExhaust();
+  if (gameMode == 0) {
+    // game mode is "in progress"
+    // draw a triangle centred on xLoc,yLoc
+    // later, we'll substitute an image instead of a triangle
+    // https://processing.org/examples/regularpolygon.html
+    pushMatrix();
+    translate(shipLocation.x, shipLocation.y);
+    rotate(shipDirection);
+    if (exhaust > 0) {
+      drawExhaust();
+    }
+    fill(0,255,0);
+    polygon(0, 0, shipSize, 3);  // Triangle
+    popMatrix();
   }
-  fill(0,255,0);
-  polygon(0, 0, shipSize, 3);  // Triangle
-  popMatrix();
 }
 
 void drawExplosion() {
@@ -519,14 +554,18 @@ boolean detectAsteroidCentre() {
 }
 
 void waitToSpawn() {
-  // the ship is born again with a new life
-  // wait until screen centre is clear before relaunching ship
+  if (gameMode == 1) {
+    // game mode is "waiting to spawn"
+    
+    // the ship is born again with a new life
+    // wait until screen centre is clear before relaunching ship
 
-  // detect if the area around the display centre is free of asteroids
-  if (!detectAsteroidCentre()) {
-    // spawn ship
-    // set game mode to "in progress"
-    gameMode = 0;
+    // detect if the area around the display centre is free of asteroids
+    if (!detectAsteroidCentre()) {
+      // spawn ship
+      // set game mode to "in progress"
+      gameMode = 0;
+    }
   }
 }
 
@@ -732,71 +771,73 @@ void polygon(float x, float y, float radius, int npoints) {
 }
 
 void drawLaser() {
-  // draw the laser bolts
-  PVector theLocation = new PVector(0,0);
-  int isLaserOn;
-  
-  if (laserLocation.size() > 0) {
-    for (int i=0;i<laserLocation.size();i++) {
-      isLaserOn = laserOn.get(i);
-      if (isLaserOn > 0) {
-        theLocation = laserLocation.get(i);
-        // colour is red
-        fill(255,0,0);
-        ellipse(theLocation.x,theLocation.y,laserSize,laserSize);
-        // decriment life of this laser bolt
-        isLaserOn--;
-        laserOn.set(i,isLaserOn);
+  if (gameMode == 0) {
+    // game mode is "in progress"
+    // draw the laser bolts
+    if (laserLocation.size() > 0) {
+      for (int i=0;i<laserLocation.size();i++) {
+        int isLaserOn = laserOn.get(i);
+        if (isLaserOn > 0) {
+          PVector theLocation = new PVector(0,0);
+          theLocation = laserLocation.get(i);
+          // colour is red
+          fill(255,0,0);
+          ellipse(theLocation.x,theLocation.y,laserSize,laserSize);
+          // decriment life of this laser bolt
+          isLaserOn--;
+          laserOn.set(i,isLaserOn);
+        }
       }
     }
   }
 }
 
 void moveLaser() {
-  // move the laser bolt
-  PVector theLocation = new PVector(0,0);
-  PVector theVelocity = new PVector(0,0);
-  int isLaserOn;
-  
-  if (laserLocation.size() > 0) {
-    // traverse array in reverse order because we might drop elements from the array
-    for (int i=laserLocation.size()-1;i>=0;i--) {
-      isLaserOn = laserOn.get(i);
-      if (isLaserOn > 0) {
-        // get the laser bolts location and velocity
-        theLocation = laserLocation.get(i);
-        theVelocity = laserVelocity.get(i);
+  if (gameMode == 0) {
+    // game mode is "in progress"
+    // move the laser bolt
+    if (laserLocation.size() > 0) {
+      // traverse array in reverse order because we might drop elements from the array
+      for (int i=laserLocation.size()-1;i>=0;i--) {
+        int isLaserOn = laserOn.get(i);
+        if (isLaserOn > 0) {
+          // get the laser bolts location and velocity
+          PVector theLocation = new PVector(0,0);
+          PVector theVelocity = new PVector(0,0);
+          theLocation = laserLocation.get(i);
+          theVelocity = laserVelocity.get(i);
         
-        // update laser location
-        theLocation.add(theVelocity);
+          // update laser location
+          theLocation.add(theVelocity);
         
-        // wrap laser around display when it reaches the edge of the display
-        if (theLocation.x < 0) {
-          theLocation.x += width;
-        }
-        if (theLocation.x > (width-1)) {
-          theLocation.x -= width;
-        }
-        if (theLocation.y < 0) {
-          theLocation.y += height;
-        }
-        if (theLocation.y > (height-1)) {
-          theLocation.y -= height;
-        }
+          // wrap laser around display when it reaches the edge of the display
+          if (theLocation.x < 0) {
+            theLocation.x += width;
+          }
+          if (theLocation.x > (width-1)) {
+            theLocation.x -= width;
+          }
+          if (theLocation.y < 0) {
+            theLocation.y += height;
+          }
+          if (theLocation.y > (height-1)) {
+            theLocation.y -= height;
+          }
         
-        // store the new laser bolts location
-        laserLocation.set(i,theLocation);
+          // store the new laser bolts location
+          laserLocation.set(i,theLocation);
         
-        // decriment laserOn for the laser bolt
-        // laser bolt travels for a number of frames, then dies
-        isLaserOn--;
+          // decriment laserOn for the laser bolt
+          // laser bolt travels for a number of frames, then dies
+          isLaserOn--;
         
-        // remove laser bolts where laserOn is zero
-        // the laser bolt has travelled for allowed number of frames, or has hit an asteroid
-        if (isLaserOn < 1) {
-          laserLocation.remove(i);
-          laserVelocity.remove(i);
-          laserOn.remove(i);
+          // remove laser bolts where laserOn is zero
+          // the laser bolt has travelled for allowed number of frames, or has hit an asteroid
+          if (isLaserOn < 1) {
+            laserLocation.remove(i);
+            laserVelocity.remove(i);
+            laserOn.remove(i);
+          }
         }
       }
     }
@@ -831,6 +872,55 @@ void fireLaser() {
   framesSinceFire = 0;
 }
 
+void drawAlien() {
+  waitAlien();
+  if (alienOn) {
+    // colour is yellow
+    fill(255,255,0);
+    ellipse(alienLocation.x,alienLocation.y,alienSize,alienSize);
+  }
+}
+
+void moveAlien() {
+  if (alienOn) {
+    alienLocation.add(alienVelocity);
+    
+    // alien disappears when it reaches the edge of the display
+    if (alienLocation.x < 0) {
+      alienOn = false;
+    }
+    if (alienLocation.x > (width-1)) {
+      alienOn = false;
+    }
+    if (alienLocation.y < 0) {
+      alienOn = false;
+    }
+    if (alienLocation.y > (height-1)) {
+      alienOn = false;
+    }
+  }
+}
+
+void waitAlien() {
+  if ((level >= alienLevel) && (!alienOn)) {
+    if (random(alienSpawnSeconds*frameRate*2) < 3) {
+      // randomly spawn an alien visitor
+      alienOn = true;
+      alienLocation.y = 30;
+      alienVelocity.y = 0;
+      if (random(2) < 1) {
+        // alien visits from the left
+        alienLocation.x = 0;
+        alienVelocity.x = 1 + (alienSpeedChange * (level - 1));
+      } else {
+        // alien visits from the right
+        alienLocation.x = width-1;
+        alienVelocity.x = -1 * (1 + (alienSpeedChange * (level - 1)));
+      }
+    }
+  }
+}
+
 void initKeys() {
   // set all keys to up (not pressed)
   leftPressed = false;
@@ -841,37 +931,41 @@ void initKeys() {
 }
 
 void processKeyPress() {
-  // called by every frame drawn
-  // this allows us to have fluid and multiple simultaneous key presses
-  if (leftPressed) {
-    // left arrow key, turn left
-    shipDirection -= PI/shipTurnSpeed;
-    if (shipDirection < 0) {
-      shipDirection = 2*PI;
-    }    
-  }
-  if (rightPressed) {
-    // right arrow key, turn right
-    shipDirection += PI/shipTurnSpeed;
-    if (shipDirection > (2*PI)) {
-      shipDirection = 0;
-    }    
-  }
-  if (upPressed) {
-    // up arrow key, accelerate
-    acceleration = thrustConstant;
-    accelerateShip();
-  }
-  if (downPressed) {
-    // down arrow key, decelerate
-    acceleration = -1 * thrustConstant;
-    accelerateShip();
-  }
-  if (spacePressed) {
-    // space key, fire laser
-    // we allow a laser bolt to fire every laserFireFrames frames
-    if (framesSinceFire > laserFireFrames) {
-      fireLaser();
+  if (gameMode == 0) {
+    // game mode is "in progress"
+    // process key presses so user interface responds to user input on each frame
+    // called by every frame drawn
+    // this allows us to have fluid and multiple simultaneous key presses
+    if (leftPressed) {
+      // left arrow key, turn left
+      shipDirection -= PI/shipTurnSpeed;
+      if (shipDirection < 0) {
+        shipDirection = 2*PI;
+      }    
+    }
+    if (rightPressed) {
+      // right arrow key, turn right
+      shipDirection += PI/shipTurnSpeed;
+      if (shipDirection > (2*PI)) {
+        shipDirection = 0;
+      }
+    }
+    if (upPressed) {
+      // up arrow key, accelerate
+      acceleration = thrustConstant;
+      accelerateShip();
+    }
+    if (downPressed) {
+      // down arrow key, decelerate
+      acceleration = -1 * thrustConstant;
+      accelerateShip();
+    }
+    if (spacePressed) {
+      // space key, fire laser
+      // we allow a laser bolt to fire every laserFireFrames frames
+      if (framesSinceFire > laserFireFrames) {
+        fireLaser();
+      }
     }
   }
 }
