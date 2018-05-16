@@ -63,7 +63,9 @@ float laserSpeed = 15,
       // determines how fast asteroid speed increases with difficulty increase
       asteroidSpeedChange = 0.25,
       //
-      alienSpeedChange = 0.5;
+      alienSpeedChange = 0.5,
+      //
+      alienLaserSpeed = 5;
     // score is zero at start of level 1
 int score=0,
     // game starts at level 1
@@ -101,7 +103,11 @@ int score=0,
     //
     alienSize = 25,
     // level that alien first appears on
-    alienLevel = 1;
+    alienLevel = 1,
+    //
+    alienLaserSpawnSeconds = 10,
+    //
+    alienLaserSize = 10;
     //
 int exhaust,
     // which ship explosion "frame" is currently displaying
@@ -185,6 +191,7 @@ void draw(){
   
   // draw remaining elements of the game composition
   drawAsteroids();
+  drawAlienLaser();
   drawAlien();
   drawScore();
   drawExplosion();
@@ -199,9 +206,10 @@ void draw(){
   moveShip();  
   moveLaser();
   
-  // move the asteroids and alien
+  // move the asteroids, alien, and alien laser bolt
   moveAsteroids();
   moveAlien();
+  moveAlienLaser();
     
   if (gameMode == 0) {
     // game mode is "in progress"
@@ -872,6 +880,54 @@ void fireLaser() {
   framesSinceFire = 0;
 }
 
+void drawAlienLaser() {
+  waitAlienLaser();
+  if (alienLaserOn) {
+    // draw the alien laser
+    // colour is yellow
+    fill(255,255,0);
+    ellipse(alienLaserLocation.x,alienLaserLocation.y,alienLaserSize,alienLaserSize);
+  }
+}
+
+void moveAlienLaser() {
+  if (alienLaserOn) {
+    alienLaserLocation.add(alienLaserVelocity);
+    
+    // alien laser bolt disappears when it reaches the edge of the display
+    if (alienLaserLocation.x < 0) {
+      alienLaserOn = false;
+    }
+    if (alienLaserLocation.x > (width-1)) {
+      alienLaserOn = false;
+    }
+    if (alienLaserLocation.y < 0) {
+      alienLaserOn = false;
+    }
+    if (alienLaserLocation.y > (height-1)) {
+      alienLaserOn = false;
+    }
+  }
+}
+
+void waitAlienLaser() {
+  if ((level >= alienLevel) && (alienOn)) {
+    if (!alienLaserOn) {
+      // we might fire an alien laser
+      if (random(alienLaserSpawnSeconds*frameRate*2) < 3) {
+        // randomly spawn an alien laser
+        alienLaserOn = true;
+        // the alien laser fires from the alien ship
+        alienLaserLocation.x = alienLocation.x;
+        alienLaserLocation.y = alienLocation.y;
+        // the alien laser fires downwards
+        alienLaserVelocity.x = 0;
+        alienLaserVelocity.y = alienLaserSpeed;
+      }
+    }
+  }
+}
+
 void drawAlien() {
   waitAlien();
   if (alienOn) {
@@ -903,6 +959,7 @@ void moveAlien() {
 
 void waitAlien() {
   if ((level >= alienLevel) && (!alienOn)) {
+    // we might spawn an alien
     if (random(alienSpawnSeconds*frameRate*2) < 3) {
       // randomly spawn an alien visitor
       alienOn = true;
