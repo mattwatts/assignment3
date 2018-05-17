@@ -42,7 +42,9 @@ PVector shipLocation,
         //
         alienLaserLocation,
         //
-        alienLaserVelocity;
+        alienLaserVelocity,
+        //
+        alienExplosionLocation;
       // current direction (bearing) of ship
 float shipDirection,
       // current acceleration of ship
@@ -118,7 +120,9 @@ int exhaust,
     // how long have we been waiting for new ship to spawn?
     spawnWait,
     // how long have we been waiting for the new game to start
-    endGameWait;
+    endGameWait,
+    //
+    alienExplosion;
         // is the left arrow key down?
 boolean leftPressed = false,
         // is the right arrow key down?
@@ -158,6 +162,8 @@ int[] scores = {25,50,100};
 int[] shipExplosions = {500,450,400,350,300,250,200,150,100,50};
 // each element of this array is an asteroid explosion "frame"
 int[] asteroidExplosions = {250,225,200,175,150,125,100,75,50,25};
+//
+int[] alienExplosions = {250,225,200,175,150,125,100,75,50,25};
 
 void setup(){
   //size(600,800);
@@ -234,6 +240,7 @@ void initGame() {
   shipExplosionLocation = new PVector(0,0);
   alienLocation = new PVector(0,0);
   alienVelocity = new PVector(0,0);
+  alienExplosionLocation = new PVector(0,0);
   alienLaserLocation = new PVector(0,0);
   alienLaserVelocity = new PVector(0,0);
 }
@@ -493,11 +500,8 @@ void drawShip() {
   }
 }
 
-void drawExplosion() {
-  // draw frame of an explosion animation  
-  int theExplosion;
-  PVector thePosition = new PVector(0,0);
-  
+void drawShipExplosion() {
+  // draw frame of ship explosion animation
   if (shipExplosion > 0) {
     // colout is red
     fill(255,0,0);
@@ -506,8 +510,14 @@ void drawExplosion() {
             shipExplosions[shipExplosion-1],shipExplosions[shipExplosion-1]);
     // move to next frame of the ship explosion animation
     shipExplosion--;
-  }
-  
+  }  
+}
+
+void drawAsteroidExplosion() {
+  int theExplosion;
+  PVector thePosition = new PVector(0,0);
+
+  // draw frame of asteroid explosion animation
   for (int i=0;i<asteroids;i++) {
     theExplosion = asteroidExplosion.get(i);
     
@@ -525,6 +535,32 @@ void drawExplosion() {
       asteroidExplosion.set(i,theExplosion);
     }
   }
+}
+
+void drawAlienExplosion() {
+  // draw frame of alien explosion animation
+  if (alienExplosion > 0) {
+    // colout is red
+    fill(255,0,0);
+    // draw frame of alien explosion animation
+    ellipse(alienExplosionLocation.x,alienExplosionLocation.y,
+            alienExplosions[alienExplosion-1],alienExplosions[alienExplosion-1]);
+    // move to next frame of the alien explosion animation
+    alienExplosion--;
+  }  
+}
+
+void drawExplosion() {
+  // draw frame of an explosion animation  
+  
+  // draw frame of ship explosion animation
+  drawShipExplosion();
+  
+  // draw frame of asteroid explosion animation
+  drawAsteroidExplosion();
+  
+  // draw frame of alien explosion animation
+  drawAlienExplosion();
 }
 
 boolean detectAsteroidCentre() {
@@ -767,12 +803,22 @@ void asteroidExplodes(int laser, int asteroid) {
   asteroidHit(asteroid);
 }
 
-void alienExplodes() {
+void alienExplodes(int laser) {
+  int isLaserOn;
+  
+  // destroy the alien
   alienOn = false;
   
+  // set laser bolt off
+  isLaserOn = 0;
+  laserOn.set(laser,isLaserOn);
+
   // alien is exploding
   // start alien explosion animation
-  
+  alienExplosion = alienExplosions.length;
+  // set alien explosion location
+  alienExplosionLocation.x = alienLocation.x;
+  alienExplosionLocation.y = alienLocation.y;
 }
 
 boolean detectLaserCollision() {
@@ -833,7 +879,7 @@ boolean detectLaserCollision() {
               // laser hits alien
               fReturn = true;
               
-              alienExplodes();
+              alienExplodes(i);
         }
       }
     }
