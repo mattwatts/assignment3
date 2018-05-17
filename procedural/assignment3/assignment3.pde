@@ -1,4 +1,3 @@
-//# asteroids-ass3
 //cosc101 assessment 3
 // Authors: Matthew Watts
 // Student Number: 9102134
@@ -35,15 +34,15 @@ PVector shipLocation,
         shipVelocity,
         // location of ship explosion
         shipExplosionLocation,
-        //
+        // current location of alien ship
         alienLocation,
-        //
+        // current velocity of alien ship
         alienVelocity,
-        //
+        // current location of alien laser bolt
         alienLaserLocation,
-        //
+        // current velocity of alien laser bolt
         alienLaserVelocity,
-        //
+        // location of alien ship explosion animation
         alienExplosionLocation;
       // current direction (bearing) of ship
 float shipDirection,
@@ -64,9 +63,9 @@ float laserSpeed = 15,
       asteroidStartSpeed = 1,
       // determines how fast asteroid speed increases with difficulty increase
       asteroidSpeedChange = 0.25,
-      //
+      // determines how fast alien ship speed increases with difficulty increase
       alienSpeedChange = 0.5,
-      //
+      // speed of alien laser bolt
       alienLaserSpeed = 5;
     // score is zero at start of level 1
 int score=0,
@@ -83,7 +82,6 @@ int score=0,
     // how many extra asteroids on new levels
     asteroidLevelUp = 2,
     // how long is segment size on ship triangle
-    // this is a placeholder until ship graphic introduced
     shipSize = 10,
     // determines how quickly ship turns when left and right arrow pressed
     shipTurnSpeed = 50,
@@ -95,24 +93,24 @@ int score=0,
     // gameMode: 0="in progress", 1="waiting to spawn", 2="game over"
     gameMode = 0,
     // how many frames must pass before laser fires again
-    laserFireFrames = 20,
+    laserFireFrames = 10,
     // how many frames have elapsed since laser bolt was fired
     framesSinceFire = laserFireFrames + 1,
     // how many frames must pass before a new game can start
     endGameFrames = 20,
-    //
+    // delay before alien ship spawns
     alienSpawnSeconds = 10,
-    //
+    // size of alien ship
     alienSize = 25,
     // level that alien first appears on
     alienLevel = 1,
-    //
+    // delay before alien ship fires laser bolt
     alienLaserSpawnSeconds = 10,
-    //
+    // size of alien laser bolt
     alienLaserSize = 10,
-    //
+    // how many points for shooting alien ship
     scoreAlien = 200;
-    //
+    // is the ship exhause showing: 0 = not showing, 1 = showing
 int exhaust,
     // which ship explosion "frame" is currently displaying
     shipExplosion,
@@ -123,7 +121,7 @@ int exhaust,
     spawnWait,
     // how long have we been waiting for the new game to start
     endGameWait,
-    //
+    // which alien explosion "frame" is currently showing
     alienExplosion;
         // is the left arrow key down?
 boolean leftPressed = false,
@@ -154,7 +152,6 @@ ArrayList<Integer> asteroidExplosion =  new ArrayList<Integer>();
 // how fast is the asteroid travelling
 ArrayList<Float> asteroidSpeed =  new ArrayList<Float>();
 // what is the diameter for each asteroid circle: large=100, medium=50, small=25
-// this is a placeholder until asteroid graphics introduced
 int[] asteroidSizes = {75,50,25};
 // how many points for shooting each asteroid size: large=25, medium=50, small=100
 int[] scores = {25,50,100};
@@ -164,11 +161,12 @@ int[] scores = {25,50,100};
 int[] shipExplosions = {500,450,400,350,300,250,200,150,100,50};
 // each element of this array is an asteroid explosion "frame"
 int[] asteroidExplosions = {250,225,200,175,150,125,100,75,50,25};
-//
+// each element of this array is an alien explosion "frame"
 int[] alienExplosions = {250,225,200,175,150,125,100,75,50,25};
 
 void setup(){
-  //size(600,800);
+  // initialise the game
+  
   size(500,650);
   
   // set the font size for displaying score
@@ -179,11 +177,14 @@ void setup(){
   
   frameRate(30);
   
+  // initialise game variables and start the game
   initGame();
   restartGame();
 }
 
 void draw(){
+  // draw a frame of the game
+  
   // set a black background to draw on
   background(0);
 
@@ -193,7 +194,7 @@ void draw(){
   // process key presses so user interface responds to user input on each frame
   processKeyPress();
   
-  // laser bolt and ship
+  // draw laser bolt and ship
   drawLaser();
   drawShip();
   
@@ -205,11 +206,9 @@ void draw(){
   drawExplosion();
   drawLives();
   
-  
   // display game over messages
   drawGameOver();
   
-  // game mode is "in progress"
   // move the ship and laser bolt
   moveShip();  
   moveLaser();
@@ -219,26 +218,22 @@ void draw(){
   moveAlien();
   moveAlienLaser();
     
-  if (gameMode == 0) {
-    // game mode is "in progress"
-    // detect collision between:
-    //   ship laser and asteroids
-    //   ship laser and alien
-    //   alien laser and ship
-    detectLaserCollision();
+  // detect collision between:
+  //   ship laser and asteroids
+  //   ship laser and alien
+  //   alien laser and ship
+  detectLaserCollision();
     
-    // detect collision between:
-    //   ship and asteroids
-    //   ship and alien
-    detectShipCollision();
-  }
+  // detect collision between:
+  //   ship and asteroids
+  //   ship and alien
+  detectShipCollision();
 }
 
 void initGame() {
-  // initialise the ship location and direction vectors
-  // pass 2 parameters to the PVector constructor so processing knows it's 2 dimensional
+  // initialise the PVectors
+  // pass 2 parameters to the PVector constructors so processing knows they're 2 dimensional
   shipLocation = new PVector(0,0); 
-  
   shipExplosionLocation = new PVector(0,0);
   alienLocation = new PVector(0,0);
   alienVelocity = new PVector(0,0);
@@ -248,6 +243,8 @@ void initGame() {
 }
 
 void restartGame() {
+  // start or restart the game
+  
   // the ship is not moving
   shipVelocity = new PVector(0,0);
   
@@ -269,6 +266,8 @@ void restartGame() {
 }
 
 void drawGameOver() {
+  // draw the game over message
+  
   if (gameMode == 2) {
     // game mode is "game over"
     // set text colour blue
@@ -302,7 +301,7 @@ void drawLives() {
  fill(0,255,0);
  pushMatrix();
  translate(1,1);
- //rotate(1.5*PI);
+ // draw an icon for each spare ship life remaining
  for (int i=0;i<livesRemaining-1;i++) {
    polygon(20+(i*20),80, shipSize, 3);
  }
@@ -421,6 +420,8 @@ void moveAsteroids() {
 }
 
 void accelerateShip() {
+  // accelerate or decelerate the ship
+  
   // calculate the acceleration
   PVector shipAcceleration;
   shipAcceleration = new PVector(cos(shipDirection),sin(shipDirection));
@@ -433,6 +434,7 @@ void accelerateShip() {
 }
 
 void moveShip() {
+  // move the ship
   if (gameMode == 0) {
     // game mode is "in progress"
     // move the ship
@@ -471,7 +473,7 @@ void teleportShip() {
 }
 
 void drawExhaust() {
-  // draw a rocket exhaust
+  // draw a rocket exhaust for the ship
   fill(255,0,0);
   if (upPressed) {
     // draw a rocket exhaust behind the ship
@@ -485,6 +487,7 @@ void drawExhaust() {
 }
 
 void drawShip() {
+  // draw the ship
   if (gameMode == 0) {
     // game mode is "in progress"
     // draw a triangle centred on xLoc,yLoc
@@ -516,6 +519,7 @@ void drawShipExplosion() {
 }
 
 void drawAsteroidExplosion() {
+  // draw frame of asteroid explosion animation
   int theExplosion;
   PVector thePosition = new PVector(0,0);
 
@@ -583,21 +587,19 @@ boolean detectAsteroidCentre() {
       tolerance = (asteroidSizes[theSize]/2) + centreRadius;
       
       // circular collision detection:
-      // (x2-x1)^2 + (y1-y2)^2 <= (r1+r2)^2
+      // uses formula (x2-x1)^2 + (y1-y2)^2 <= (r1+r2)^2
       if (sq(thePosition.x - (width/2)) + sq(thePosition.y - (height/2)) <= sq(tolerance)) {
         // asteroid is near centre
         fReturn = true;
       }
       
       spawnWait++;
-      println(spawnWait);
       
       if (spawnWait > spawnWaitLimit) {
         // we've waited too long
         // spawn the ship anyway
         fReturn = false;
         spawnWait = 0;
-        println("spawn anyway");
       }
     }
   }
@@ -605,6 +607,7 @@ boolean detectAsteroidCentre() {
 }
 
 void waitToSpawn() {
+  // wait to spawn a new life for the ship
   if (gameMode == 1) {
     // game mode is "waiting to spawn"
     
@@ -621,6 +624,8 @@ void waitToSpawn() {
 }
 
 void nextLife() {
+  // the ship moves to one of its remaining spare lives
+  
   // initial ship direction is up: 1.5 pi radians is up
   shipDirection = 1.5*PI;
 
@@ -669,23 +674,26 @@ void detectShipCollisionAsteroid() {
   int theSize;
   PVector thePosition = new PVector(0,0);
 
-  for (int i=0;i<asteroids;i++) {
-    isDead = asteroidDead.get(i);
+  if (gameMode == 0) {
+    // game mode is in progress
+    for (int i=0;i<asteroids;i++) {
+      isDead = asteroidDead.get(i);
     
-    if (! isDead) {
-      theSize = asteroidSize.get(i);
-      thePosition = asteroidPosition.get(i);
+      if (! isDead) {
+        theSize = asteroidSize.get(i);
+        thePosition = asteroidPosition.get(i);
       
-      toleranceAsteroid = (asteroidSizes[theSize]/2) + (shipSize/2);
+        toleranceAsteroid = (asteroidSizes[theSize]/2) + (shipSize/2);
 
-      // bounding box collision detection
-      if (shipLocation.x >= (thePosition.x-toleranceAsteroid) &
-          shipLocation.x <= (thePosition.x+toleranceAsteroid) &
-          shipLocation.y >= (thePosition.y-toleranceAsteroid) &
-          shipLocation.y <= (thePosition.y+toleranceAsteroid)) {
-            // ship has collided with an asteroid
-            // a life is destroyed
-            shipExplodes();
+        // bounding box collision detection
+        if (shipLocation.x >= (thePosition.x-toleranceAsteroid) &
+            shipLocation.x <= (thePosition.x+toleranceAsteroid) &
+            shipLocation.y >= (thePosition.y-toleranceAsteroid) &
+            shipLocation.y <= (thePosition.y+toleranceAsteroid)) {
+              // ship has collided with an asteroid
+              // a life is destroyed
+              shipExplodes();
+        }
       }
     }
   }
@@ -695,6 +703,7 @@ void detectShipCollisionAlien() {
   // detect collision between ship and alien
   int toleranceAlien;
   
+  // alien is visiting and game mode is in progress
   if ((alienOn) & (gameMode == 0)) {
     toleranceAlien = (alienSize/2) + (shipSize/2);
     
@@ -840,27 +849,33 @@ void detectLaserCollisionAsteroid() {
   PVector thePosition = new PVector(0,0);
   PVector theLocation = new PVector(0,0);
   
-  // detect collision between ship laser and asteroids
-  for (int i=0;i<asteroids;i++) {
-    isDead = asteroidDead.get(i);
-    if ((! isDead) & (laserLocation.size() > 0)) {
-      for (int j=0;j<laserLocation.size();j++) {
-        isLaserOn = laserOn.get(j);
-        if (isLaserOn > 0) {
-          theSize = asteroidSize.get(i);
+  if (gameMode == 0) {
+    // game mode is "in progress"
+    // detect collision between ship laser and asteroids
+    for (int i=0;i<asteroids;i++) {
+      isDead = asteroidDead.get(i);
+      if ((! isDead) & (laserLocation.size() > 0)) {
+        for (int j=0;j<laserLocation.size();j++) {
+          isLaserOn = laserOn.get(j);
+          if (isLaserOn > 0) {
+            // break the loop if we have killed an asteroid and are still firing
+            if (i <= asteroidSize.size()) {
+              theSize = asteroidSize.get(i);
       
-          toleranceAsteroid = (asteroidSizes[theSize]/2) + (laserSize/2);
+              toleranceAsteroid = (asteroidSizes[theSize]/2) + (laserSize/2);
       
-          thePosition = asteroidPosition.get(i);
-          theLocation = laserLocation.get(j);
+              thePosition = asteroidPosition.get(i);
+              theLocation = laserLocation.get(j);
 
-          // bounding box collision detection
-          if (theLocation.x >= (thePosition.x-toleranceAsteroid) &
-              theLocation.x <= (thePosition.x+toleranceAsteroid) &
-              theLocation.y >= (thePosition.y-toleranceAsteroid) &
-              theLocation.y <= (thePosition.y+toleranceAsteroid)) {
-                // laser hits asteroid
-                asteroidExplodes(j,i);
+              // bounding box collision detection
+              if (theLocation.x >= (thePosition.x-toleranceAsteroid) &
+                  theLocation.x <= (thePosition.x+toleranceAsteroid) &
+                  theLocation.y >= (thePosition.y-toleranceAsteroid) &
+                  theLocation.y <= (thePosition.y+toleranceAsteroid)) {
+                    // laser hits asteroid
+                    asteroidExplodes(j,i);
+              }
+            }
           }
         }
       }
@@ -873,22 +888,25 @@ void detectLaserCollisionAlien() {
   int toleranceAlien, isLaserOn;
   PVector theLocation = new PVector(0,0);
 
-  // detect collision between ship laser and alien
-  if ((laserLocation.size() > 0) && (alienOn)) {
-    for (int i=0;i<laserLocation.size();i++) {
-      isLaserOn = laserOn.get(i);
-      if (isLaserOn > 0) {
-        toleranceAlien = (alienSize/2) + (laserSize/2);
+  if (gameMode == 0) {
+    // game mode is "in progress"
+    // detect collision between ship laser and alien
+    if ((laserLocation.size() > 0) && (alienOn)) {
+      for (int i=0;i<laserLocation.size();i++) {
+        isLaserOn = laserOn.get(i);
+        if (isLaserOn > 0) {
+          toleranceAlien = (alienSize/2) + (laserSize/2);
         
-        theLocation = laserLocation.get(i);
+          theLocation = laserLocation.get(i);
 
-        // bounding box collision detection
-        if (theLocation.x >= (alienLocation.x-toleranceAlien) &
-            theLocation.x <= (alienLocation.x+toleranceAlien) &
-            theLocation.y >= (alienLocation.y-toleranceAlien) &
-            theLocation.y <= (alienLocation.y+toleranceAlien)) {
-              // laser hits alien
-              alienExplodes(i);
+          // bounding box collision detection
+          if (theLocation.x >= (alienLocation.x-toleranceAlien) &
+              theLocation.x <= (alienLocation.x+toleranceAlien) &
+              theLocation.y >= (alienLocation.y-toleranceAlien) &
+              theLocation.y <= (alienLocation.y+toleranceAlien)) {
+                // laser hits alien
+                alienExplodes(i);
+          }
         }
       }
     }
@@ -899,16 +917,19 @@ void detectLaserCollisionShip() {
   // detect collision between alien laser and ship
   int toleranceShip;
     
-  if (alienLaserOn) {
-    toleranceShip = (shipSize/2) + (alienLaserSize/2);
+  if (gameMode == 0) {
+    // game mode is "in progress"
+    if (alienLaserOn) {
+      toleranceShip = (shipSize/2) + (alienLaserSize/2);
 
-    // bounding box collision detection
-    if (shipLocation.x >= (alienLaserLocation.x-toleranceShip) &
-        shipLocation.x <= (alienLaserLocation.x+toleranceShip) &
-        shipLocation.y >= (alienLaserLocation.y-toleranceShip) &
-        shipLocation.y <= (alienLaserLocation.y+toleranceShip)) {
-          // laser hits alien
-          shipExplodes();
+      // bounding box collision detection
+      if (shipLocation.x >= (alienLaserLocation.x-toleranceShip) &
+          shipLocation.x <= (alienLaserLocation.x+toleranceShip) &
+          shipLocation.y >= (alienLaserLocation.y-toleranceShip) &
+          shipLocation.y <= (alienLaserLocation.y+toleranceShip)) {
+            // laser hits alien
+            shipExplodes();
+      }
     }
   }
 }
@@ -929,8 +950,8 @@ void detectLaserCollision() {
   detectLaserCollisionShip();
 }
 
-// this function is a placeholder only until we substitute in ship graphics
 void polygon(float x, float y, float radius, int npoints) {
+  // draw a polygon at specified x,y location of specified radius with specified number of points
   float angle = TWO_PI / npoints;
   beginShape();
   for (float a = 0; a < TWO_PI; a += angle) {
@@ -942,6 +963,7 @@ void polygon(float x, float y, float radius, int npoints) {
 }
 
 void drawLaser() {
+  // draw the ships laser bolts
   if (gameMode == 0) {
     // game mode is "in progress"
     // draw the laser bolts
@@ -964,9 +986,10 @@ void drawLaser() {
 }
 
 void moveLaser() {
+  // move the ships laser bolts
   if (gameMode == 0) {
     // game mode is "in progress"
-    // move the laser bolt
+    // move the laser bolts
     if (laserLocation.size() > 0) {
       // traverse array in reverse order because we might drop elements from the array
       for (int i=laserLocation.size()-1;i>=0;i--) {
@@ -1020,7 +1043,7 @@ void moveLaser() {
 }
 
 void fireLaser() {
-  // create a laser bolt
+  // fire a laser bolt
   PVector theLocation = new PVector(0,0);
   PVector theVelocity = new PVector(0,0);
   int isLaserOn;
@@ -1044,6 +1067,7 @@ void fireLaser() {
 }
 
 void drawAlienLaser() {
+  // draw alien laser bolt
   waitAlienLaser();
   if (alienLaserOn) {
     // draw the alien laser
@@ -1054,6 +1078,7 @@ void drawAlienLaser() {
 }
 
 void moveAlienLaser() {
+  // move alien laser bolt
   if (alienLaserOn) {
     alienLaserLocation.add(alienLaserVelocity);
     
@@ -1074,6 +1099,7 @@ void moveAlienLaser() {
 }
 
 void waitAlienLaser() {
+  // randomly spawn an alien laser bolt
   if ((level >= alienLevel) && (alienOn)) {
     if (!alienLaserOn) {
       // we might fire an alien laser
@@ -1092,6 +1118,8 @@ void waitAlienLaser() {
 }
 
 void drawAlien() {
+  // draw alien ship
+  // randomly spawn alien ship if it doesn't exist
   waitAlien();
   if (alienOn) {
     // colour is yellow
@@ -1101,6 +1129,7 @@ void drawAlien() {
 }
 
 void moveAlien() {
+  // move alien ship
   if (alienOn) {
     alienLocation.add(alienVelocity);
     
@@ -1121,6 +1150,7 @@ void moveAlien() {
 }
 
 void waitAlien() {
+  // randomly spawn alien ship if it doesn't exist
   if ((level >= alienLevel) && (!alienOn)) {
     // we might spawn an alien
     if (random(alienSpawnSeconds*frameRate*2) < 3) {
@@ -1151,6 +1181,7 @@ void initKeys() {
 }
 
 void processKeyPress() {
+  // do key action for keys that are currently pressed
   if (gameMode == 0) {
     // game mode is "in progress"
     // process key presses so user interface responds to user input on each frame
@@ -1194,7 +1225,6 @@ void keyPressed() {
   // detect when a key is pressed down
   if (gameMode == 2) {
     // game mode is "game over"
-    println(endGameWait);
     if (endGameWait > endGameFrames) {
       // when game is over, press any key to restart game
       score = 0;
