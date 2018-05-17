@@ -109,9 +109,13 @@ int score=0,
     //
     alienLaserSpawnSeconds = 10,
     //
+<<<<<<< HEAD
     alienLaserSize = 10,
     //
     scoreAlien = 200;
+=======
+    alienLaserSize = 10;
+>>>>>>> 82c9ccde331b9ad105180c489a0989c60b0677a8
     //
 int exhaust,
     // which ship explosion "frame" is currently displaying
@@ -662,13 +666,26 @@ void shipExplodes() {
   }
 }
 
+<<<<<<< HEAD
 void detectShipCollisionAsteroid() {
   // detect collision between ship and asteroids
   int toleranceAsteroid;
+=======
+boolean detectShipCollision() {
+  // detect collision between:
+  //   ship and asteroids
+  //   ship and alien
+  int toleranceAsteroid, toleranceAlien;
+>>>>>>> 82c9ccde331b9ad105180c489a0989c60b0677a8
   boolean isDead;
   int theSize;
   PVector thePosition = new PVector(0,0);
+<<<<<<< HEAD
 
+=======
+  
+  // detect collision between ship and asteroids
+>>>>>>> 82c9ccde331b9ad105180c489a0989c60b0677a8
   for (int i=0;i<asteroids;i++) {
     isDead = asteroidDead.get(i);
     
@@ -685,20 +702,31 @@ void detectShipCollisionAsteroid() {
           shipLocation.y <= (thePosition.y+toleranceAsteroid)) {
             // ship has collided with an asteroid
             // a life is destroyed
+<<<<<<< HEAD
+=======
+            fReturn = true;
+            
+>>>>>>> 82c9ccde331b9ad105180c489a0989c60b0677a8
             shipExplodes();
       }
     }
   }
+<<<<<<< HEAD
 }
 
 void detectShipCollisionAlien() {
   // detect collision between ship and alien
   int toleranceAlien;
   
+=======
+  
+  // detect collision between ship and alien
+>>>>>>> 82c9ccde331b9ad105180c489a0989c60b0677a8
   if ((alienOn) & (gameMode == 0)) {
     toleranceAlien = (alienSize/2) + (shipSize/2);
     
     // bounding box collision detection
+<<<<<<< HEAD
     if (shipLocation.x >= (alienLocation.x-toleranceAlien) &
         shipLocation.x <= (alienLocation.x+toleranceAlien) &
         shipLocation.y >= (alienLocation.y-toleranceAlien) &
@@ -720,6 +748,21 @@ void detectShipCollision() {
   
   // detect collision between ship and alien
   detectShipCollisionAlien();
+=======
+    if (shipLocation.x >= (thePosition.x-toleranceAlien) &
+        shipLocation.x <= (thePosition.x+toleranceAlien) &
+        shipLocation.y >= (thePosition.y-toleranceAlien) &
+        shipLocation.y <= (thePosition.y+toleranceAlien)) {
+          // ship has collided with an alien
+          // a life is destroyed
+          fReturn = true;
+          
+          shipExplodes();
+    }
+  }
+  
+  return(fReturn);
+>>>>>>> 82c9ccde331b9ad105180c489a0989c60b0677a8
 }
 
 void spawnAsteroid(float positionX, float positionY, float theSpeed, int theSize) {
@@ -791,6 +834,7 @@ void asteroidHit(int iAsteroid) {
 
 void asteroidExplodes(int laser, int asteroid) {
   int isLaserOn, theExplosion;              
+<<<<<<< HEAD
   boolean isDead;
   
   // set laser bolt off
@@ -840,6 +884,58 @@ void detectLaserCollisionAsteroid() {
   PVector thePosition = new PVector(0,0);
   PVector theLocation = new PVector(0,0);
   
+=======
+  boolean isDead;
+  
+  // set laser bolt off
+  isLaserOn = 0;
+  laserOn.set(laser,isLaserOn);
+
+  // destroy the asteroid
+  isDead = true;
+  asteroidDead.set(asteroid,isDead);
+            
+  // asteroid is exploding
+  // start asteroid explosion animation
+  theExplosion = asteroidExplosions.length;
+  asteroidExplosion.set(asteroid,theExplosion);
+  
+  // asteroid was hit
+  // spawn baby asteroids
+  asteroidHit(asteroid);
+}
+
+void alienExplodes(int laser) {
+  int isLaserOn;
+  
+  // destroy the alien
+  alienOn = false;
+  
+  // set laser bolt off
+  isLaserOn = 0;
+  laserOn.set(laser,isLaserOn);
+
+  // alien is exploding
+  // start alien explosion animation
+  alienExplosion = alienExplosions.length;
+  // set alien explosion location
+  alienExplosionLocation.x = alienLocation.x;
+  alienExplosionLocation.y = alienLocation.y;
+}
+
+boolean detectLaserCollision() {
+  // detect collision between:
+  //   ship laser and asteroids
+  //   ship laser and alien
+  //   alien laser and ship
+  int toleranceAsteroid, toleranceAlien, toleranceShip, isLaserOn;
+  boolean isDead;
+  boolean fReturn = false;
+  int theSize;
+  PVector thePosition = new PVector(0,0);
+  PVector theLocation = new PVector(0,0);
+
+>>>>>>> 82c9ccde331b9ad105180c489a0989c60b0677a8
   // detect collision between ship laser and asteroids
   for (int i=0;i<asteroids;i++) {
     isDead = asteroidDead.get(i);
@@ -860,12 +956,18 @@ void detectLaserCollisionAsteroid() {
               theLocation.y >= (thePosition.y-toleranceAsteroid) &
               theLocation.y <= (thePosition.y+toleranceAsteroid)) {
                 // laser hits asteroid
+<<<<<<< HEAD
+=======
+                fReturn = true;
+                
+>>>>>>> 82c9ccde331b9ad105180c489a0989c60b0677a8
                 asteroidExplodes(j,i);
           }
         }
       }
     }
   }
+<<<<<<< HEAD
 }
 
 void detectLaserCollisionAlien() {
@@ -875,6 +977,11 @@ void detectLaserCollisionAlien() {
 
   // detect collision between ship laser and alien
   if ((laserLocation.size() > 0) && (alienOn)) {
+=======
+  
+  // detect collision between ship laser and alien
+  if (laserLocation.size() > 0) {
+>>>>>>> 82c9ccde331b9ad105180c489a0989c60b0677a8
     for (int i=0;i<laserLocation.size();i++) {
       isLaserOn = laserOn.get(i);
       if (isLaserOn > 0) {
@@ -888,10 +995,34 @@ void detectLaserCollisionAlien() {
             theLocation.y >= (alienLocation.y-toleranceAlien) &
             theLocation.y <= (alienLocation.y+toleranceAlien)) {
               // laser hits alien
+<<<<<<< HEAD
+=======
+              fReturn = true;
+              
+>>>>>>> 82c9ccde331b9ad105180c489a0989c60b0677a8
               alienExplodes(i);
         }
       }
     }
+<<<<<<< HEAD
+=======
+  }
+  
+  // detect collision between alien laser and ship
+  if (alienLaserOn) {
+    toleranceShip = (shipSize/2) + (alienLaserSize/2);
+
+    // bounding box collision detection
+    if (shipLocation.x >= (alienLaserLocation.x-toleranceShip) &
+        shipLocation.x <= (alienLaserLocation.x+toleranceShip) &
+        shipLocation.y >= (alienLaserLocation.y-toleranceShip) &
+        shipLocation.y <= (alienLaserLocation.y+toleranceShip)) {
+          // laser hits alien
+          fReturn = true;
+          
+          shipExplodes();
+    }
+>>>>>>> 82c9ccde331b9ad105180c489a0989c60b0677a8
   }
 }
 
