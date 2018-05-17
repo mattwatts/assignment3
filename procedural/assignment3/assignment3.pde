@@ -42,7 +42,9 @@ PVector shipLocation,
         //
         alienLaserLocation,
         //
-        alienLaserVelocity;
+        alienLaserVelocity,
+        //
+        alienExplosionLocation;
       // current direction (bearing) of ship
 float shipDirection,
       // current acceleration of ship
@@ -63,7 +65,9 @@ float laserSpeed = 15,
       // determines how fast asteroid speed increases with difficulty increase
       asteroidSpeedChange = 0.25,
       //
-      alienSpeedChange = 0.5;
+      alienSpeedChange = 0.5,
+      //
+      alienLaserSpeed = 5;
     // score is zero at start of level 1
 int score=0,
     // game starts at level 1
@@ -101,7 +105,13 @@ int score=0,
     //
     alienSize = 25,
     // level that alien first appears on
-    alienLevel = 1;
+    alienLevel = 1,
+    //
+    alienLaserSpawnSeconds = 10,
+    //
+    alienLaserSize = 10,
+    //
+    scoreAlien = 200;
     //
 int exhaust,
     // which ship explosion "frame" is currently displaying
@@ -112,7 +122,9 @@ int exhaust,
     // how long have we been waiting for new ship to spawn?
     spawnWait,
     // how long have we been waiting for the new game to start
-    endGameWait;
+    endGameWait,
+    //
+    alienExplosion;
         // is the left arrow key down?
 boolean leftPressed = false,
         // is the right arrow key down?
@@ -152,6 +164,8 @@ int[] scores = {25,50,100};
 int[] shipExplosions = {500,450,400,350,300,250,200,150,100,50};
 // each element of this array is an asteroid explosion "frame"
 int[] asteroidExplosions = {250,225,200,175,150,125,100,75,50,25};
+//
+int[] alienExplosions = {250,225,200,175,150,125,100,75,50,25};
 
 void setup(){
   //size(600,800);
@@ -185,6 +199,7 @@ void draw(){
   
   // draw remaining elements of the game composition
   drawAsteroids();
+  drawAlienLaser();
   drawAlien();
   drawScore();
   drawExplosion();
@@ -199,16 +214,22 @@ void draw(){
   moveShip();  
   moveLaser();
   
-  // move the asteroids and alien
+  // move the asteroids, alien, and alien laser bolt
   moveAsteroids();
   moveAlien();
+  moveAlienLaser();
     
   if (gameMode == 0) {
     // game mode is "in progress"
-    // detect collision between laser and asteroids
+    // detect collision between:
+    //   ship laser and asteroids
+    //   ship laser and alien
+    //   alien laser and ship
     detectLaserCollision();
     
-    // detect collision between ship and asteroids
+    // detect collision between:
+    //   ship and asteroids
+    //   ship and alien
     detectShipCollision();
   }
 }
@@ -221,6 +242,7 @@ void initGame() {
   shipExplosionLocation = new PVector(0,0);
   alienLocation = new PVector(0,0);
   alienVelocity = new PVector(0,0);
+  alienExplosionLocation = new PVector(0,0);
   alienLaserLocation = new PVector(0,0);
   alienLaserVelocity = new PVector(0,0);
 }
@@ -480,11 +502,8 @@ void drawShip() {
   }
 }
 
-void drawExplosion() {
-  // draw frame of an explosion animation  
-  int theExplosion;
-  PVector thePosition = new PVector(0,0);
-  
+void drawShipExplosion() {
+  // draw frame of ship explosion animation
   if (shipExplosion > 0) {
     // colout is red
     fill(255,0,0);
@@ -493,8 +512,14 @@ void drawExplosion() {
             shipExplosions[shipExplosion-1],shipExplosions[shipExplosion-1]);
     // move to next frame of the ship explosion animation
     shipExplosion--;
-  }
-  
+  }  
+}
+
+void drawAsteroidExplosion() {
+  int theExplosion;
+  PVector thePosition = new PVector(0,0);
+
+  // draw frame of asteroid explosion animation
   for (int i=0;i<asteroids;i++) {
     theExplosion = asteroidExplosion.get(i);
     
@@ -512,6 +537,32 @@ void drawExplosion() {
       asteroidExplosion.set(i,theExplosion);
     }
   }
+}
+
+void drawAlienExplosion() {
+  // draw frame of alien explosion animation
+  if (alienExplosion > 0) {
+    // colout is red
+    fill(255,0,0);
+    // draw frame of alien explosion animation
+    ellipse(alienExplosionLocation.x,alienExplosionLocation.y,
+            alienExplosions[alienExplosion-1],alienExplosions[alienExplosion-1]);
+    // move to next frame of the alien explosion animation
+    alienExplosion--;
+  }  
+}
+
+void drawExplosion() {
+  // draw frame of an explosion animation  
+  
+  // draw frame of ship explosion animation
+  drawShipExplosion();
+  
+  // draw frame of asteroid explosion animation
+  drawAsteroidExplosion();
+  
+  // draw frame of alien explosion animation
+  drawAlienExplosion();
 }
 
 boolean detectAsteroidCentre() {
@@ -582,14 +633,42 @@ void nextLife() {
   shipVelocity.y = 0;  
 }
 
-boolean detectShipCollision() {
+void shipExplodes() {
+  // ship has collided with an asteroid or alien
+  
+  // set all keys to up
+  initKeys();
+  // start animation of ship explosion
+  shipExplosion = shipExplosions.length;
+  // set ship explosion location
+  shipExplosionLocation.x = shipLocation.x;
+  shipExplosionLocation.y = shipLocation.y;
+  
+  // how many lives do we have left?
+  livesRemaining--;
+  if (livesRemaining > 0) {
+    // go to the next life
+    // game mode is "waiting to spawn"
+    gameMode = 1;
+    // reset the waiting to spawn timer
+    spawnWait = 0;
+    // reset the ship parameters for a new life
+    nextLife();
+  } else {
+    // game mode is "game over"
+    gameMode = 2;
+    // reset end game timer
+    endGameWait = 0;
+  }
+}
+
+void detectShipCollisionAsteroid() {
   // detect collision between ship and asteroids
-  int tolerance;
+  int toleranceAsteroid;
   boolean isDead;
-  boolean fReturn = false;
   int theSize;
   PVector thePosition = new PVector(0,0);
-  
+
   for (int i=0;i<asteroids;i++) {
     isDead = asteroidDead.get(i);
     
@@ -597,48 +676,55 @@ boolean detectShipCollision() {
       theSize = asteroidSize.get(i);
       thePosition = asteroidPosition.get(i);
       
-      tolerance = (asteroidSizes[theSize]/2) + (shipSize/2);
+      toleranceAsteroid = (asteroidSizes[theSize]/2) + (shipSize/2);
 
-      if (shipLocation.x >= (thePosition.x-tolerance) &
-          shipLocation.x <= (thePosition.x+tolerance) &
-          shipLocation.y >= (thePosition.y-tolerance) &
-          shipLocation.y <= (thePosition.y+tolerance)) {
+      // bounding box collision detection
+      if (shipLocation.x >= (thePosition.x-toleranceAsteroid) &
+          shipLocation.x <= (thePosition.x+toleranceAsteroid) &
+          shipLocation.y >= (thePosition.y-toleranceAsteroid) &
+          shipLocation.y <= (thePosition.y+toleranceAsteroid)) {
             // ship has collided with an asteroid
             // a life is destroyed
-            fReturn = true;
-            // set all keys to up
-            initKeys();
-            // start animation of ship explosion
-            shipExplosion = shipExplosions.length;
-            // set ship explosion location
-            shipExplosionLocation.x = shipLocation.x;
-            shipExplosionLocation.y = shipLocation.y;
-            
-            // how many lives do we have left?
-            livesRemaining--;
-            if (livesRemaining > 0) {
-              // go to the next life
-              // game mode is "waiting to spawn"
-              gameMode = 1;
-              // reset the waiting to spawn timer
-              spawnWait = 0;
-              // reset the ship parameters for a new life
-              nextLife();
-            } else {
-              // game mode is "game over"
-              gameMode = 2;
-              // reset end game timer
-              endGameWait = 0;
-            }
+            shipExplodes();
       }
     }
   }
-  return(fReturn);
+}
+
+void detectShipCollisionAlien() {
+  // detect collision between ship and alien
+  int toleranceAlien;
+  
+  if ((alienOn) & (gameMode == 0)) {
+    toleranceAlien = (alienSize/2) + (shipSize/2);
+    
+    // bounding box collision detection
+    if (shipLocation.x >= (alienLocation.x-toleranceAlien) &
+        shipLocation.x <= (alienLocation.x+toleranceAlien) &
+        shipLocation.y >= (alienLocation.y-toleranceAlien) &
+        shipLocation.y <= (alienLocation.y+toleranceAlien)) {
+          // ship has collided with an alien
+          // a life is destroyed
+          shipExplodes();
+    }
+  }
+}
+
+void detectShipCollision() {
+  // detect collision between:
+  //   ship and asteroids
+  //   ship and alien
+  
+  // detect collision between ship and asteroids
+  detectShipCollisionAsteroid();
+  
+  // detect collision between ship and alien
+  detectShipCollisionAlien();
 }
 
 void spawnAsteroid(float positionX, float positionY, float theSpeed, int theSize) {
   // spawn a baby asteroid
-  // asteroid moving in a random direction
+  // baby asteroid moves in a random direction
   float theDirection = random(2*PI);
   boolean isDead = false;
   int theExplosion = 0;
@@ -703,16 +789,58 @@ void asteroidHit(int iAsteroid) {
   }
 }
 
-boolean detectLaserCollision() {
-  // detect collision between laser and asteroids
-  int tolerance, isLaserOn;
-  int iHit = 0;
+void asteroidExplodes(int laser, int asteroid) {
+  int isLaserOn, theExplosion;              
   boolean isDead;
-  boolean fReturn = false;
-  int theSize, theExplosion;
+  
+  // set laser bolt off
+  isLaserOn = 0;
+  laserOn.set(laser,isLaserOn);
+
+  // destroy the asteroid
+  isDead = true;
+  asteroidDead.set(asteroid,isDead);
+            
+  // asteroid is exploding
+  // start asteroid explosion animation
+  theExplosion = asteroidExplosions.length;
+  asteroidExplosion.set(asteroid,theExplosion);
+  
+  // asteroid was hit
+  // spawn baby asteroids
+  asteroidHit(asteroid);
+}
+
+void alienExplodes(int laser) {
+  int isLaserOn;
+  
+  // destroy the alien
+  alienOn = false;
+  
+  // set laser bolt off
+  isLaserOn = 0;
+  laserOn.set(laser,isLaserOn);
+  
+  // increment score for shooting the alien
+  score += scoreAlien;
+
+  // alien is exploding
+  // start alien explosion animation
+  alienExplosion = alienExplosions.length;
+  // set alien explosion location
+  alienExplosionLocation.x = alienLocation.x;
+  alienExplosionLocation.y = alienLocation.y;
+}
+
+void detectLaserCollisionAsteroid() {
+  // detect collision between ship laser and asteroids
+  int toleranceAsteroid, isLaserOn;
+  boolean isDead;
+  int theSize;
   PVector thePosition = new PVector(0,0);
   PVector theLocation = new PVector(0,0);
-
+  
+  // detect collision between ship laser and asteroids
   for (int i=0;i<asteroids;i++) {
     isDead = asteroidDead.get(i);
     if ((! isDead) & (laserLocation.size() > 0)) {
@@ -721,41 +849,84 @@ boolean detectLaserCollision() {
         if (isLaserOn > 0) {
           theSize = asteroidSize.get(i);
       
-          tolerance = (asteroidSizes[theSize]/2) + (laserSize/2);
+          toleranceAsteroid = (asteroidSizes[theSize]/2) + (laserSize/2);
       
           thePosition = asteroidPosition.get(i);
           theLocation = laserLocation.get(j);
-      
-          if (theLocation.x >= (thePosition.x-tolerance) &
-              theLocation.x <= (thePosition.x+tolerance) &
-              theLocation.y >= (thePosition.y-tolerance) &
-              theLocation.y <= (thePosition.y+tolerance)) {
-                // laser hits asteroid
-                fReturn = true;
-                isLaserOn = 0;
-                laserOn.set(j,isLaserOn);
-                iHit = i;
 
-                // destroy the asteroid
-                isDead = true;
-                asteroidDead.set(i,isDead);
-            
-                // asteroid is exploding
-                // start asteroid explosion animation
-                theExplosion = asteroidExplosions.length;
-                asteroidExplosion.set(i,theExplosion);
+          // bounding box collision detection
+          if (theLocation.x >= (thePosition.x-toleranceAsteroid) &
+              theLocation.x <= (thePosition.x+toleranceAsteroid) &
+              theLocation.y >= (thePosition.y-toleranceAsteroid) &
+              theLocation.y <= (thePosition.y+toleranceAsteroid)) {
+                // laser hits asteroid
+                asteroidExplodes(j,i);
           }
         }
       }
     }
   }
-  
-  if (fReturn) {
-    // asteroid iReturn was hit
-    asteroidHit(iHit);
+}
+
+void detectLaserCollisionAlien() {
+  // detect collision between ship laser and alien
+  int toleranceAlien, isLaserOn;
+  PVector theLocation = new PVector(0,0);
+
+  // detect collision between ship laser and alien
+  if ((laserLocation.size() > 0) && (alienOn)) {
+    for (int i=0;i<laserLocation.size();i++) {
+      isLaserOn = laserOn.get(i);
+      if (isLaserOn > 0) {
+        toleranceAlien = (alienSize/2) + (laserSize/2);
+        
+        theLocation = laserLocation.get(i);
+
+        // bounding box collision detection
+        if (theLocation.x >= (alienLocation.x-toleranceAlien) &
+            theLocation.x <= (alienLocation.x+toleranceAlien) &
+            theLocation.y >= (alienLocation.y-toleranceAlien) &
+            theLocation.y <= (alienLocation.y+toleranceAlien)) {
+              // laser hits alien
+              alienExplodes(i);
+        }
+      }
+    }
   }
+}
+
+void detectLaserCollisionShip() {
+  // detect collision between alien laser and ship
+  int toleranceShip;
+    
+  if (alienLaserOn) {
+    toleranceShip = (shipSize/2) + (alienLaserSize/2);
+
+    // bounding box collision detection
+    if (shipLocation.x >= (alienLaserLocation.x-toleranceShip) &
+        shipLocation.x <= (alienLaserLocation.x+toleranceShip) &
+        shipLocation.y >= (alienLaserLocation.y-toleranceShip) &
+        shipLocation.y <= (alienLaserLocation.y+toleranceShip)) {
+          // laser hits alien
+          shipExplodes();
+    }
+  }
+}
+
+void detectLaserCollision() {
+  // detect collision between:
+  //   ship laser and asteroids
+  //   ship laser and alien
+  //   alien laser and ship
+
+  // detect collision between ship laser and asteroids
+  detectLaserCollisionAsteroid();
   
-  return(fReturn);
+  // detect collision between ship laser and alien
+  detectLaserCollisionAlien();
+  
+  // detect collision between alien laser and ship
+  detectLaserCollisionShip();
 }
 
 // this function is a placeholder only until we substitute in ship graphics
@@ -872,6 +1043,54 @@ void fireLaser() {
   framesSinceFire = 0;
 }
 
+void drawAlienLaser() {
+  waitAlienLaser();
+  if (alienLaserOn) {
+    // draw the alien laser
+    // colour is yellow
+    fill(255,255,0);
+    ellipse(alienLaserLocation.x,alienLaserLocation.y,alienLaserSize,alienLaserSize);
+  }
+}
+
+void moveAlienLaser() {
+  if (alienLaserOn) {
+    alienLaserLocation.add(alienLaserVelocity);
+    
+    // alien laser bolt disappears when it reaches the edge of the display
+    if (alienLaserLocation.x < 0) {
+      alienLaserOn = false;
+    }
+    if (alienLaserLocation.x > (width-1)) {
+      alienLaserOn = false;
+    }
+    if (alienLaserLocation.y < 0) {
+      alienLaserOn = false;
+    }
+    if (alienLaserLocation.y > (height-1)) {
+      alienLaserOn = false;
+    }
+  }
+}
+
+void waitAlienLaser() {
+  if ((level >= alienLevel) && (alienOn)) {
+    if (!alienLaserOn) {
+      // we might fire an alien laser
+      if (random(alienLaserSpawnSeconds*frameRate*2) < 3) {
+        // randomly spawn an alien laser
+        alienLaserOn = true;
+        // the alien laser fires from the alien ship
+        alienLaserLocation.x = alienLocation.x;
+        alienLaserLocation.y = alienLocation.y;
+        // the alien laser fires downwards
+        alienLaserVelocity.x = 0;
+        alienLaserVelocity.y = alienLaserSpeed;
+      }
+    }
+  }
+}
+
 void drawAlien() {
   waitAlien();
   if (alienOn) {
@@ -903,6 +1122,7 @@ void moveAlien() {
 
 void waitAlien() {
   if ((level >= alienLevel) && (!alienOn)) {
+    // we might spawn an alien
     if (random(alienSpawnSeconds*frameRate*2) < 3) {
       // randomly spawn an alien visitor
       alienOn = true;
