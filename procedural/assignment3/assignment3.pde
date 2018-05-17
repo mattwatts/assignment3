@@ -55,18 +55,20 @@ ArrayList<PVector> laserVelocity = new ArrayList<PVector>();
 // time remaining for laser bolts
 ArrayList<Integer> laserOn = new ArrayList<Integer>();
       // determines how fast the laser bolt moves
-float laserSpeed = 15,
+float laserSpeed = 30,
       // determines how much thrust happens when up and down arrow pressed
       // pixels per frame per frame ship acceleration
       thrustConstant = 0.2,
-      // determines how fast large asteroids move on level 1
+      // how fast large asteroids move on level 1
       asteroidStartSpeed = 1,
-      // determines how fast asteroid speed increases with difficulty increase
+      // how fast asteroid speed increases with difficulty increase
       asteroidSpeedChange = 0.25,
-      // determines how fast alien ship speed increases with difficulty increase
+      // how fast alien ship speed increases with difficulty increase
       alienSpeedChange = 0.5,
       // speed of alien laser bolt
-      alienLaserSpeed = 5;
+      alienLaserSpeed = 5,
+      // initial ship direction is up: 1.5 pi radians is up
+      initialShipDirection = 1.5*PI;
     // score is zero at start of level 1
 int score=0,
     // game starts at level 1
@@ -81,7 +83,7 @@ int score=0,
     startAsteroidCount = 4,
     // how many extra asteroids on new levels
     asteroidLevelUp = 2,
-    // how long is segment size on ship triangle
+    // radius size on ship triangle
     shipSize = 10,
     // determines how quickly ship turns when left and right arrow pressed
     shipTurnSpeed = 50,
@@ -93,22 +95,22 @@ int score=0,
     // gameMode: 0="in progress", 1="waiting to spawn", 2="game over"
     gameMode = 0,
     // how many frames must pass before laser fires again
-    laserFireFrames = 10,
+    laserFireFrames = 5,
     // how many frames have elapsed since laser bolt was fired
     framesSinceFire = laserFireFrames + 1,
     // how many frames must pass before a new game can start
     endGameFrames = 20,
-    // delay before alien ship spawns
+    // stochastic delay before alien ship spawns
     alienSpawnSeconds = 10,
     // size of alien ship
     alienSize = 25,
     // level that alien first appears on
-    alienLevel = 1,
-    // delay before alien ship fires laser bolt
+    alienLevel = 2,
+    // stochastic delay before alien ship fires laser bolt
     alienLaserSpawnSeconds = 10,
     // size of alien laser bolt
     alienLaserSize = 10,
-    // how many points for shooting alien ship
+    // points for shooting alien ship
     scoreAlien = 200;
     // is the ship exhause showing: 0 = not showing, 1 = showing
 int exhaust,
@@ -151,7 +153,7 @@ ArrayList<Integer> asteroidSize = new ArrayList<Integer>();
 ArrayList<Integer> asteroidExplosion =  new ArrayList<Integer>();
 // how fast is the asteroid travelling
 ArrayList<Float> asteroidSpeed =  new ArrayList<Float>();
-// what is the diameter for each asteroid circle: large=100, medium=50, small=25
+// diameter for each asteroid circle: large=100, medium=50, small=25
 int[] asteroidSizes = {75,50,25};
 // how many points for shooting each asteroid size: large=25, medium=50, small=100
 int[] scores = {25,50,100};
@@ -165,7 +167,7 @@ int[] asteroidExplosions = {250,225,200,175,150,125,100,75,50,25};
 int[] alienExplosions = {250,225,200,175,150,125,100,75,50,25};
 
 void setup(){
-  // initialise the game
+// Purpose: initialise the game
   
   size(500,650);
   
@@ -173,7 +175,7 @@ void setup(){
   textSize(26);
 
   // initial ship direction is up: 1.5 pi radians is up
-  shipDirection = 1.5*PI;
+  shipDirection = initialShipDirection;
   
   frameRate(30);
   
@@ -183,7 +185,7 @@ void setup(){
 }
 
 void draw(){
-  // draw a frame of the game
+// Purpose: draw a frame of the game
   
   // set a black background to draw on
   background(0);
@@ -218,20 +220,15 @@ void draw(){
   moveAlien();
   moveAlienLaser();
     
-  // detect collision between:
-  //   ship laser and asteroids
-  //   ship laser and alien
-  //   alien laser and ship
+  // detect collision between lasers and asteroids, alien, ship
   detectLaserCollision();
     
-  // detect collision between:
-  //   ship and asteroids
-  //   ship and alien
+  // detect collision between ship and asteroids, alien
   detectShipCollision();
 }
 
 void initGame() {
-  // initialise the PVectors
+// Purpose: initialise the PVectors
   // pass 2 parameters to the PVector constructors so processing knows they're 2 dimensional
   shipLocation = new PVector(0,0); 
   shipExplosionLocation = new PVector(0,0);
@@ -243,7 +240,7 @@ void initGame() {
 }
 
 void restartGame() {
-  // start or restart the game
+// Purpose: start or restart the game
   
   // the ship is not moving
   shipVelocity = new PVector(0,0);
@@ -266,7 +263,7 @@ void restartGame() {
 }
 
 void drawGameOver() {
-  // draw the game over message
+// Purpose: draw the game over message
   
   if (gameMode == 2) {
     // game mode is "game over"
@@ -283,8 +280,6 @@ void drawGameOver() {
 
 void drawScore() {
 // Purpose: draw the score in Blue
-// Arguments: none
-// Return value: none
 
   // set text colour blue
   fill(0,0,255);
@@ -296,7 +291,8 @@ void drawScore() {
 }
 
 void drawLives() {
- // purpose: draw the number of lives remaining as ship icons
+// Purpose: draw the number of lives remaining as ship icons
+
  // colour is green
  fill(0,255,0);
  pushMatrix();
@@ -309,7 +305,7 @@ void drawLives() {
 }
 
 void initAsteroids() {
-  // create new asteroid set for the start of a level
+// Purpose: create new asteroid set for the start of a level
   float theDirection, theSpeed;
   boolean isDead = false;
   int theSize = 0, // asteroid is large size
@@ -362,7 +358,7 @@ void initAsteroids() {
 }
 
 void drawAsteroids() {
-  // draw asteroids
+// Purpose: draw asteroids
   boolean isDead;
   int theSize;
   PVector thePosition = new PVector(0,0);
@@ -383,7 +379,7 @@ void drawAsteroids() {
 }
 
 void moveAsteroids() {
-  // move the asteroids
+// Purpose: move the asteroids
   float theDirection, theSpeed;
   boolean isDead;
   PVector thePosition = new PVector(0,0);
@@ -420,7 +416,7 @@ void moveAsteroids() {
 }
 
 void accelerateShip() {
-  // accelerate or decelerate the ship
+// Purpose: accelerate or decelerate the ship
   
   // calculate the acceleration
   PVector shipAcceleration;
@@ -434,7 +430,7 @@ void accelerateShip() {
 }
 
 void moveShip() {
-  // move the ship
+// Purpose: move the ship
   if (gameMode == 0) {
     // game mode is "in progress"
     // move the ship
@@ -458,7 +454,7 @@ void moveShip() {
 }
 
 void teleportShip() {
-  // teleport ship to a random location
+// Purpose: teleport ship to a random location
   
   // set all keys to up before teleport
   initKeys();
@@ -473,7 +469,7 @@ void teleportShip() {
 }
 
 void drawExhaust() {
-  // draw a rocket exhaust for the ship
+// Purpose: draw a rocket exhaust for the ship
   fill(255,0,0);
   if (upPressed) {
     // draw a rocket exhaust behind the ship
@@ -487,7 +483,7 @@ void drawExhaust() {
 }
 
 void drawShip() {
-  // draw the ship
+// Purpose: draw the ship
   if (gameMode == 0) {
     // game mode is "in progress"
     // draw a triangle centred on xLoc,yLoc
@@ -506,7 +502,7 @@ void drawShip() {
 }
 
 void drawShipExplosion() {
-  // draw frame of ship explosion animation
+// Purpose: draw frame of ship explosion animation
   if (shipExplosion > 0) {
     // colout is red
     fill(255,0,0);
@@ -519,7 +515,7 @@ void drawShipExplosion() {
 }
 
 void drawAsteroidExplosion() {
-  // draw frame of asteroid explosion animation
+// Purpose: draw frame of asteroid explosion animation
   int theExplosion;
   PVector thePosition = new PVector(0,0);
 
@@ -544,7 +540,7 @@ void drawAsteroidExplosion() {
 }
 
 void drawAlienExplosion() {
-  // draw frame of alien explosion animation
+// Purpose: draw frame of alien explosion animation
   if (alienExplosion > 0) {
     // colout is red
     fill(255,0,0);
@@ -557,7 +553,7 @@ void drawAlienExplosion() {
 }
 
 void drawExplosion() {
-  // draw frame of an explosion animation  
+// Purpose: draw frame of an explosion animation  
   
   // draw frame of ship explosion animation
   drawShipExplosion();
@@ -570,7 +566,7 @@ void drawExplosion() {
 }
 
 boolean detectAsteroidCentre() {
-  // use circular collision detection to see if a asteroid is "near" centre of display
+// Purpose: detect if a asteroid is "near" centre of display
   int tolerance;
   boolean isDead;
   boolean fReturn = false;
@@ -607,7 +603,7 @@ boolean detectAsteroidCentre() {
 }
 
 void waitToSpawn() {
-  // wait to spawn a new life for the ship
+// Purpose: wait to spawn a new life for the ship
   if (gameMode == 1) {
     // game mode is "waiting to spawn"
     
@@ -624,7 +620,7 @@ void waitToSpawn() {
 }
 
 void nextLife() {
-  // the ship moves to one of its remaining spare lives
+// Purpose: the ship moves to one of its remaining spare lives
   
   // initial ship direction is up: 1.5 pi radians is up
   shipDirection = 1.5*PI;
@@ -639,7 +635,7 @@ void nextLife() {
 }
 
 void shipExplodes() {
-  // ship has collided with an asteroid or alien
+// Purpose: ship has collided with an asteroid or alien
   
   // set all keys to up
   initKeys();
@@ -668,7 +664,7 @@ void shipExplodes() {
 }
 
 void detectShipCollisionAsteroid() {
-  // detect collision between ship and asteroids
+// Purpose: detect collision between ship and asteroids
   int toleranceAsteroid;
   boolean isDead;
   int theSize;
@@ -700,7 +696,7 @@ void detectShipCollisionAsteroid() {
 }
 
 void detectShipCollisionAlien() {
-  // detect collision between ship and alien
+// Purpose: detect collision between ship and alien
   int toleranceAlien;
   
   // alien is visiting and game mode is in progress
@@ -720,9 +716,9 @@ void detectShipCollisionAlien() {
 }
 
 void detectShipCollision() {
-  // detect collision between:
-  //   ship and asteroids
-  //   ship and alien
+// Purpose: detect collision between:
+//   ship and asteroids
+//   ship and alien
   
   // detect collision between ship and asteroids
   detectShipCollisionAsteroid();
@@ -732,7 +728,7 @@ void detectShipCollision() {
 }
 
 void spawnAsteroid(float positionX, float positionY, float theSpeed, int theSize) {
-  // spawn a baby asteroid
+// Purpose: spawn a baby asteroid
   // baby asteroid moves in a random direction
   float theDirection = random(2*PI);
   boolean isDead = false;
@@ -754,8 +750,8 @@ void spawnAsteroid(float positionX, float positionY, float theSpeed, int theSize
 }
 
 void asteroidHit(int iAsteroid) {
-  // an asteroid has been hit with a laser bolt
-  // potentially spawn baby asteroids
+// Purpose: an asteroid has been hit with a laser bolt
+//          potentially spawn baby asteroids
   boolean isDead;
   int theSize;
   PVector thePosition = new PVector(0,0);
@@ -799,6 +795,7 @@ void asteroidHit(int iAsteroid) {
 }
 
 void asteroidExplodes(int laser, int asteroid) {
+// Purpose: make an asteroid explode
   int isLaserOn, theExplosion;              
   boolean isDead;
   
@@ -821,6 +818,7 @@ void asteroidExplodes(int laser, int asteroid) {
 }
 
 void alienExplodes(int laser) {
+// Purpose: make an alien explode
   int isLaserOn;
   
   // destroy the alien
@@ -842,7 +840,7 @@ void alienExplodes(int laser) {
 }
 
 void detectLaserCollisionAsteroid() {
-  // detect collision between ship laser and asteroids
+// Purpose: detect collision between ship laser and asteroids
   int toleranceAsteroid, isLaserOn;
   boolean isDead;
   int theSize;
@@ -884,7 +882,7 @@ void detectLaserCollisionAsteroid() {
 }
 
 void detectLaserCollisionAlien() {
-  // detect collision between ship laser and alien
+// Purpose: detect collision between ship laser and alien
   int toleranceAlien, isLaserOn;
   PVector theLocation = new PVector(0,0);
 
@@ -914,7 +912,7 @@ void detectLaserCollisionAlien() {
 }
 
 void detectLaserCollisionShip() {
-  // detect collision between alien laser and ship
+// Purpose: detect collision between alien laser and ship
   int toleranceShip;
     
   if (gameMode == 0) {
@@ -935,10 +933,10 @@ void detectLaserCollisionShip() {
 }
 
 void detectLaserCollision() {
-  // detect collision between:
-  //   ship laser and asteroids
-  //   ship laser and alien
-  //   alien laser and ship
+// Purpose: detect collision between:
+//   ship laser and asteroids
+//   ship laser and alien
+//   alien laser and ship
 
   // detect collision between ship laser and asteroids
   detectLaserCollisionAsteroid();
@@ -950,20 +948,21 @@ void detectLaserCollision() {
   detectLaserCollisionShip();
 }
 
-void polygon(float x, float y, float radius, int npoints) {
-  // draw a polygon at specified x,y location of specified radius with specified number of points
-  float angle = TWO_PI / npoints;
+void polygon(float x, float y, float radius, int points) {
+// Purpose: draw a polygon
+// Arguments: x,y: centroid location for polygon
+//            radius: radius for polygon
+//            points: number for points
+  float angle_between_points = TWO_PI / points;
   beginShape();
-  for (float a = 0; a < TWO_PI; a += angle) {
-    float sx = x + cos(a) * radius;
-    float sy = y + sin(a) * radius;
-    vertex(sx, sy);
+  for (float delta = 0; delta < TWO_PI; delta += angle_between_points) {
+    vertex(x + cos(delta) * radius,y + sin(delta) * radius);
   }
   endShape(CLOSE);
 }
 
 void drawLaser() {
-  // draw the ships laser bolts
+// Purpose: draw the ships laser bolts
   if (gameMode == 0) {
     // game mode is "in progress"
     // draw the laser bolts
@@ -986,7 +985,7 @@ void drawLaser() {
 }
 
 void moveLaser() {
-  // move the ships laser bolts
+// Purpose: move the ships laser bolts
   if (gameMode == 0) {
     // game mode is "in progress"
     // move the laser bolts
@@ -1043,7 +1042,7 @@ void moveLaser() {
 }
 
 void fireLaser() {
-  // fire a laser bolt
+// Purpose: fire a laser bolt
   PVector theLocation = new PVector(0,0);
   PVector theVelocity = new PVector(0,0);
   int isLaserOn;
@@ -1067,7 +1066,7 @@ void fireLaser() {
 }
 
 void drawAlienLaser() {
-  // draw alien laser bolt
+// Purpose: draw alien laser bolt
   waitAlienLaser();
   if (alienLaserOn) {
     // draw the alien laser
@@ -1078,7 +1077,7 @@ void drawAlienLaser() {
 }
 
 void moveAlienLaser() {
-  // move alien laser bolt
+// Purpose: move alien laser bolt
   if (alienLaserOn) {
     alienLaserLocation.add(alienLaserVelocity);
     
@@ -1099,7 +1098,7 @@ void moveAlienLaser() {
 }
 
 void waitAlienLaser() {
-  // randomly spawn an alien laser bolt
+// Purpose: randomly spawn an alien laser bolt
   if ((level >= alienLevel) && (alienOn)) {
     if (!alienLaserOn) {
       // we might fire an alien laser
@@ -1118,18 +1117,19 @@ void waitAlienLaser() {
 }
 
 void drawAlien() {
-  // draw alien ship
+// Purpose: draw alien ship
   // randomly spawn alien ship if it doesn't exist
   waitAlien();
   if (alienOn) {
     // colour is yellow
     fill(255,255,0);
+    // draw alien
     ellipse(alienLocation.x,alienLocation.y,alienSize,alienSize);
   }
 }
 
 void moveAlien() {
-  // move alien ship
+// Purpose: move alien ship
   if (alienOn) {
     alienLocation.add(alienVelocity);
     
@@ -1150,7 +1150,7 @@ void moveAlien() {
 }
 
 void waitAlien() {
-  // randomly spawn alien ship if it doesn't exist
+// Purpose: randomly spawn alien ship if it doesn't exist
   if ((level >= alienLevel) && (!alienOn)) {
     // we might spawn an alien
     if (random(alienSpawnSeconds*frameRate*2) < 3) {
@@ -1172,7 +1172,7 @@ void waitAlien() {
 }
 
 void initKeys() {
-  // set all keys to up (not pressed)
+// Purpose: set all keys to up (not pressed)
   leftPressed = false;
   rightPressed = false;
   upPressed = false;
@@ -1181,7 +1181,8 @@ void initKeys() {
 }
 
 void processKeyPress() {
-  // do key action for keys that are currently pressed
+// Purpose: do key action for keys that are currently pressed
+
   if (gameMode == 0) {
     // game mode is "in progress"
     // process key presses so user interface responds to user input on each frame
@@ -1222,7 +1223,7 @@ void processKeyPress() {
 }
 
 void keyPressed() {
-  // detect when a key is pressed down
+// Purpose: detect when a key is pressed down
   if (gameMode == 2) {
     // game mode is "game over"
     if (endGameWait > endGameFrames) {
@@ -1259,10 +1260,10 @@ void keyPressed() {
 }
 
 void keyReleased() {
-  // detect when a key is realeased
+// Purpose: detect when a key is realeased
   if (gameMode != 2) {
     // game mode is "waiting to spawn" or "in progress"
-    // when game is in progress, record relevant key releases so user interface is responsive
+    // record relevant key releases so user interface is responsive
     if (key == CODED) {
       if (keyCode ==  LEFT) {
         leftPressed = false;
