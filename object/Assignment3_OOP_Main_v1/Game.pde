@@ -1,97 +1,97 @@
 class Game{
   boolean paused,
-          gameOver,
-          gFX;
+          gameOver;
   
   int     numOfAst,
           score,
+          scoreCheck,
           level,
           lives;
           
-  String  gameResult;
+  String  gameState;
   
   Game(){
     this.paused = false;
     this.gameOver = false;
-    this.gFX = false;
     this.numOfAst = 3;
     this.score = 0;
+    this.scoreCheck = 2500;
     this.level = 1;
     this.lives = 4;
-    this.gameResult = "Null";
+    this.gameState = "Null";
   }
   
   //Setters and Getters
-  void setPaused(boolean pausedInput){
-    this.paused = pausedInput;
+  void setPaused(boolean iPaused){
+    this.paused = iPaused;
   }
   
   boolean getPaused(){
-    boolean gP = this.paused;
-    return gP;
+    boolean gPaused = this.paused;
+    return gPaused;
   }
   
-  void setGameOver(boolean gameOverInput){
-    this.gameOver = gameOverInput;
+  void setGameOver(boolean iGameOver){
+    this.gameOver = iGameOver;
   }
   
   boolean getGameOver(){
-    boolean gO = this.gameOver;
-    return gO;
+    boolean gGameOver = this.gameOver;
+    return gGameOver;
   }
   
-  void setGFX(boolean gFXInput){
-    this.gFX = gFXInput;
-  }
-  
-  boolean getGFX(){
-    boolean graphics = this.gFX;
-    return graphics;
-  }
-  
-  void setNumOfAst(int astNumInput){
-    this.numOfAst = astNumInput;
+  void setNumOfAst(int iAstNum){
+    this.numOfAst = iAstNum;
   }
   
   int getNumOfAst(){
-    int noa = this.numOfAst;
-    return noa;
+    int gAstNum = this.numOfAst;
+    return gAstNum;
   }
   
-  void setScore(int scoreInput){
-    this.score = scoreInput;
+  void setScore(int iScore){
+    this.score = iScore;
   }
   
   int getScore(){
-    int sc = this.score;
-    return sc;
+    int gScore = this.score;
+    return gScore;
   }
   
-  void setLevel(int lvlInput){
-    this.level = lvlInput;
+  void setScoreCheck(int iScoreCheck){
+    this.scoreCheck = iScoreCheck;
+  }
+  
+  int getScoreCheck(){
+    int gScoreCheck = this.scoreCheck;
+    return gScoreCheck;
+  }
+  
+  void setLevel(int iLVL){
+    this.level = iLVL;
   }
   
   int getLevel(){
-    int lvl = this.level;
-    return lvl;
+    int gLVL = this.level;
+    return gLVL;
   }
   
-  void setLives(int livesInput){
-    this.lives = livesInput;
+  void setLives(int iLives){
+    this.lives = iLives;
   }
   
   int getLives(){
-    int liv = this.lives;
-    return liv;
+    int gLives = this.lives;
+    return gLives;
   }
   
-  void setGameResult(String resultInput){
-    this.gameResult = resultInput;
+  void setGameState(String iState){
+    this.gameState = iState;
   }
   
-  String getGameResult(){
-    String result = this.gameResult;
-    return result;
+  String getGameState(){
+    String gState = this.gameState;
+    return gState;
   }
   
   //METHODS
@@ -152,18 +152,52 @@ class Game{
     fill(255);
     textAlign(CENTER);
     textSize(32);
-    text("READY? Press any Key", width/2, (height/3)*2);
+    text("READY? Press ENTER to Continue", width/2, (height/3)*2);
     this.setPaused(true);
     noLoop();
   }
   
   void endFrame(){
-    instance.setGameResult("Your Score is : " + instance.getScore());
+    instance.setGameState("Your Score is : " + instance.getScore());
     background(0);
     fill(255);
     textAlign(CENTER);
     textSize(32);
     text("GAME OVER", width/2, (height/5)*2);
-    text(instance.getGameResult(), width/2, (height/5)*3);
+    text(instance.getGameState(), width/2, (height/5)*3);
+  }
+  
+  void displayScoreLabel(){
+    fill(255);
+    textSize(32);
+    textAlign(LEFT);
+    text("Score: " + this.getScore(),15,32);
+  }
+  
+  
+  void displayLifeLabel(){
+    for(int i = 0; i < this.getLives(); i++){
+      int xOffset = (i * 30) + 30;
+      int yOffset = 48;
+      stroke(255);
+      strokeWeight(1);
+      noFill();
+      triangle(xOffset,yOffset,xOffset+15,yOffset+30,xOffset-15,yOffset+30);
+    }
+  }
+  
+  void displayLevelLabel(){
+    String lvlLab = nf(this.getLevel(), 2);
+    fill(255);
+    textAlign(CENTER);
+    textSize(32);
+    text(lvlLab, width/2, 32);
+  }
+  
+  void gameStateLabel(){
+    fill(255);
+    textAlign(CENTER);
+    textSize(32);
+    text(instance.getGameState(), width/2, height/3);
   }
 }
