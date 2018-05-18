@@ -1,5 +1,4 @@
 class Ship{
-  //PImage * 5 - FORWARD, BACKWARD, LEFT, RIGHT, IDLE
   PVector location,
           velocity,
           acceleration;
@@ -31,9 +30,9 @@ class Ship{
   }
   
   //Setters and Getters
-  void setLocation(float iXPos, float iYPos){
-    this.location.x = iXPos;
-    this.location.y = iYPos;
+  void setLocation(float iXLoc, float iYLoc){
+    this.location.x = iXLoc;
+    this.location.y = iYLoc;
   }
   
   PVector getLocationV(){
@@ -91,49 +90,49 @@ class Ship{
     return sAccY;
   }
   
-  void setRotateValue(float iRV){
-    this.rotateValue = iRV;
+  void setRotateValue(float iRotateVal){
+    this.rotateValue = iRotateVal;
   }
   
   float getRotateValue(){
-    float sRV = this.rotateValue;
-    return sRV;
+    float sRotateVal = this.rotateValue;
+    return sRotateVal;
   }
   
-  void setBearing(float iB){
-    this.bearing = iB;
+  void setBearing(float iBearing){
+    this.bearing = iBearing;
   }
   
   float getBearing(){
-    float sB = this.bearing;
-    return sB;
+    float sBearing = this.bearing;
+    return sBearing;
   }
   
-  void setSpeed(float iS){
-    this.speed = iS;
+  void setSpeed(float iSpeed){
+    this.speed = iSpeed;
   }
   
   float getSpeed(){
-    float sSp = this.speed;
-    return sSp;
+    float sSpeed = this.speed;
+    return sSpeed;
   }
   
-  void setThrust(float iT){
-    this.thrust = iT;
+  void setThrust(float iThrust){
+    this.thrust = iThrust;
   }
   
   float getThrust(){
-    float sT = this.thrust;
-    return sT;
+    float sThrust = this.thrust;
+    return sThrust;
   }
   
-  void setSize(float iS){
-    this.size = iS;
+  void setSize(float iSize){
+    this.size = iSize;
   }
   
   float getSize(){
-    float sS = this.size;
-    return sS;
+    float sSize = this.size;
+    return sSize;
   }
   
   void setSpawned(boolean iSpawned){
@@ -141,8 +140,8 @@ class Ship{
   }
   
   boolean getSpawned(){
-    boolean sSp = this.spawned;
-    return sSp;
+    boolean sSpawned = this.spawned;
+    return sSpawned;
   }
   
   void setExhaust(boolean iExhaust){
@@ -150,8 +149,8 @@ class Ship{
   }
   
   boolean getExhaust(){
-    boolean sE = this.exhaustOn;
-    return sE;
+    boolean sExhaust = this.exhaustOn;
+    return sExhaust;
   }
   
   void setLaser(boolean ilaser){
@@ -159,8 +158,8 @@ class Ship{
   }
   
   boolean getLaser(){
-    boolean sL = this.laserOn;
-    return sL;
+    boolean sLaser = this.laserOn;
+    return sLaser;
   }
   
   void setIsDead(boolean iDead){
@@ -168,8 +167,8 @@ class Ship{
   }
   
   boolean getIsDead(){
-    boolean sD = this.isDead;
-    return sD;
+    boolean sDead = this.isDead;
+    return sDead;
   }
     
   // METHODS:
@@ -225,12 +224,14 @@ class Ship{
     }
   }
   
+  /*
   void teleport(){
     this.setVelocity(0.0,0.0);
     float randX = random(this.getSize(), width - this.getSize());
     float randY = random(this.getSize(), height - this.getSize());
     this.setLocation(randX, randY);
   }
+  */
   
   void display(){
     pushMatrix();
