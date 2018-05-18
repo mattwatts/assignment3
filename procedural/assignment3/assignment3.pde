@@ -279,7 +279,7 @@ void drawGameOver() {
 }
 
 void drawScore() {
-// Purpose: draw the score in Blue
+// Purpose: draw the score
 
   // set text colour blue
   fill(0,0,255);
@@ -299,7 +299,7 @@ void drawLives() {
  translate(1,1);
  // draw an icon for each spare ship life remaining
  for (int i=0;i<livesRemaining-1;i++) {
-   polygon(20+(i*20),80, shipSize, 3);
+   drawPolygon(20+(i*20),80, shipSize, 3);
  }
  popMatrix(); 
 }
@@ -496,7 +496,7 @@ void drawShip() {
       drawExhaust();
     }
     fill(0,255,0);
-    polygon(0, 0, shipSize, 3);  // Triangle
+    drawPolygon(0, 0, shipSize, 3);  // Triangle
     popMatrix();
   }
 }
@@ -635,7 +635,8 @@ void nextLife() {
 }
 
 void shipExplodes() {
-// Purpose: ship has collided with an asteroid or alien
+// Purpose: make a ship explosion
+  // ship has collided with an asteroid or alien
   
   // set all keys to up
   initKeys();
@@ -948,7 +949,7 @@ void detectLaserCollision() {
   detectLaserCollisionShip();
 }
 
-void polygon(float x, float y, float radius, int points) {
+void drawPolygon(float x, float y, float radius, int points) {
 // Purpose: draw a polygon
 // Arguments: x,y: centroid location for polygon
 //            radius: radius for polygon
@@ -1260,7 +1261,7 @@ void keyPressed() {
 }
 
 void keyReleased() {
-// Purpose: detect when a key is realeased
+// Purpose: detect when a key is released
   if (gameMode != 2) {
     // game mode is "waiting to spawn" or "in progress"
     // record relevant key releases so user interface is responsive
