@@ -77,7 +77,7 @@ int score=0,
     lives=4,
     // how many lives are currently remaining?
     livesRemaining = lives,
-    // diameter of a laser bolt
+    // size of a laser bolt
     laserSize = 10,
     // how many asteroids does level 1 start with?
     startAsteroidCount = 4,
@@ -153,7 +153,7 @@ ArrayList<Integer> asteroidSize = new ArrayList<Integer>();
 ArrayList<Integer> asteroidExplosion =  new ArrayList<Integer>();
 // how fast is the asteroid travelling
 ArrayList<Float> asteroidSpeed =  new ArrayList<Float>();
-// diameter for each asteroid circle: large=100, medium=50, small=25
+// diameter for each asteroid circle: {large, medium, small}
 int[] asteroidSizes = {75,50,25};
 // how many points for shooting each asteroid size: large=25, medium=50, small=100
 int[] scores = {25,50,100};
@@ -169,6 +169,7 @@ int[] alienExplosions = {250,225,200,175,150,125,100,75,50,25};
 void setup(){
 // Purpose: initialise the game
   
+  // set display size to 500 width and 650 height
   size(500,650);
   
   // set the font size for displaying score
@@ -623,7 +624,7 @@ void nextLife() {
 // Purpose: the ship moves to one of its remaining spare lives
   
   // initial ship direction is up: 1.5 pi radians is up
-  shipDirection = 1.5*PI;
+  shipDirection = initialShipDirection;
 
   // the ship is in the centre of the screen
   shipLocation.x = width/2;
@@ -1233,7 +1234,7 @@ void keyPressed() {
       level = 1;
       livesRemaining = lives;
       // initial ship direction is up: 1.5 pi radians is up
-      shipDirection = 1.5*PI;
+      shipDirection = initialShipDirection;
   
       restartGame();
     }
