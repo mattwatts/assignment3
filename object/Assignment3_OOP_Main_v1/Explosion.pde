@@ -1,38 +1,49 @@
 class Explosion{
-  //PImage for gFX == true.
-  // point array for gFX == false
   PVector location;
   
   float radius;
   
-  Explosion(float xpos, float ypos){
-    this.location = new PVector(xpos, ypos);
+  Explosion(float iXLoc, float iYLoc){
+    this.location = new PVector(iXLoc, iYLoc);
     this.radius = 1;
   }
   
   //Setters and Getters
+  void setLocationV(float iXLoc, float iYLoc){
+    this.location.x = iXLoc;
+    this.location.y = iYLoc;
+  }
+  
+  void setLocationX(float iXLoc){
+    this.location.x = iXLoc;
+  }
+  
+  void setLocationY(float iYLoc){
+    this.location.y = iYLoc;
+  }
+  
   PVector getLocationV(){
-    PVector loc = this.location;
-    return loc;
+    PVector eLoc = this.location;
+    return eLoc;
   }
   
   float getLocationX(){
-    float locX = this.location.x;
-    return locX;
+    float eLocX = this.location.x;
+    return eLocX;
   }
   
   float getLocationY(){
-    float locY = this.location.y;
-    return locY;
+    float eLocY = this.location.y;
+    return eLocY;
   }
   
-  void setRadius(float radiusInput){
-    this.radius = radiusInput;
+  void setRadius(float iRadius){
+    this.radius = iRadius;
   }
   
   float getRadius(){
-    float r = this.radius;
-    return r;
+    float eRadius = this.radius;
+    return eRadius;
   }
   
   //METHODS

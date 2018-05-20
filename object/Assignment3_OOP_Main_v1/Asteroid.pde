@@ -1,8 +1,6 @@
 class Asteroid{
   PShape polygon;
   
-  //PImage newSchool;
-  
   PVector location,
           velocity;
   
@@ -14,101 +12,101 @@ class Asteroid{
   int     size,
           score;
                    
-  Asteroid(float xpos, float ypos, float bearingInput, float speedInput, boolean deadInput, int sizeInput, int scoreValueInput){
-    this.location = new PVector(xpos, ypos);
+  Asteroid(float iXLoc, float iYLoc, float iBearing, float iSpeed, boolean iDead, int iSize, int iScore){
+    this.location = new PVector(iXLoc, iYLoc);
     this.velocity = new PVector(0.0,0.0);
-    this.bearing = bearingInput;
-    this.speed = speedInput;
-    this.isDead = deadInput;
-    this.size = sizeInput;
-    this.score = scoreValueInput;
+    this.bearing = iBearing;
+    this.speed = iSpeed;
+    this.isDead = iDead;
+    this.size = iSize;
+    this.score = iScore;
     this.polygon = this.initPolygon((this.getSize()/2),int(random(12,24)));
   }
   
   // Setters and Getters
-  void setLocation(float xPos, float yPos){
-    this.location.x = xPos;
-    this.location.y = yPos;
+  void setLocation(float iXLoc, float iYLoc){
+    this.location.x = iXLoc;
+    this.location.y = iYLoc;
   }
   
   PVector getLocationV(){
-    PVector loc = this.location;
-    return loc;
+    PVector aLoc = this.location;
+    return aLoc;
   }
   
   float getLocationX(){
-    float locX = this.location.x;
-    return locX;
+    float aLocX = this.location.x;
+    return aLocX;
   }
   
   float getLocationY(){
-    float locY = this.location.y;
-    return locY;
+    float aLocY = this.location.y;
+    return aLocY;
   }
   
-  void setVelocity(float xVel, float yVel){
-    this.velocity.x = xVel;
-    this.velocity.y = yVel;
+  void setVelocity(float iXVel, float iYVel){
+    this.velocity.x = iXVel;
+    this.velocity.y = iYVel;
   }
   
   PVector getVelocityV(){
-    PVector vel = this.velocity;
-    return vel;
+    PVector aVel = this.velocity;
+    return aVel;
   }
   
   float getVelocityX(){
-    float velX = this.velocity.x;
-    return velX;
+    float aVelX = this.velocity.x;
+    return aVelX;
   }
   
   float getVelocityY(){
-    float velY = this.velocity.y;
-    return velY;
+    float aVelY = this.velocity.y;
+    return aVelY;
   }
   
-  void setBearing(float bearingInput){
-    this.bearing = bearingInput;
+  void setBearing(float iBearing){
+    this.bearing = iBearing;
   }
   
   float getBearing(){
-    float b = this.bearing;
-    return b;
+    float aBearing = this.bearing;
+    return aBearing;
   }
   
-  void setSpeed(float speedInput){
-    this.speed = speedInput;
+  void setSpeed(float iSpeed){
+    this.speed = iSpeed;
   }
   
   float getSpeed(){
-    float sp = this.speed;
-    return sp;
+    float aSpeed = this.speed;
+    return aSpeed;
   }
   
-  void setIsDead(boolean deadInput){
-    this.isDead = deadInput;
+  void setIsDead(boolean iDead){
+    this.isDead = iDead;
   }
   
   boolean getIsDead(){
-    boolean d = this.isDead;
-    return d;
+    boolean aDead = this.isDead;
+    return aDead;
   }
   
-  void setSize(int sizeInput){
-    this.size = sizeInput;
+  void setSize(int iSize){
+    this.size = iSize;
   }
   
   int getSize(){
-    int s = this.size;
-    return s;
+    int aSize = this.size;
+    return aSize;
   }
   
-  void setScore(int scoreValueInput){
-    this.score = scoreValueInput;
+  void setScore(int iScore){
+    this.score = iScore;
   }
   
   int getScore(){
-    int sv = this.score;
-    return sv;
+    int aScore = this.score;
+    return aScore;
   }
   
   // Methods
@@ -134,13 +132,7 @@ class Asteroid{
   
   void display(){
     if(this.getIsDead() == false){
-      /*
-      if(gObj.getGFX() == true){
-        image
-      }else{
-      */
         shape(this.polygon, this.getLocationX(),this.getLocationY());
-      //}
     }
   }
   
@@ -149,9 +141,9 @@ class Asteroid{
     if(this.getSize() >= 50){
       float spawnPointX = this.getLocationX();
       float spawnPointY = this.getLocationY();
-      float spawnSpeed = this.getSpeed() * 1.2;
+      float spawnSpeed = this.getSpeed() * 1.3;
       int spawnSize = this.getSize() / 2;
-      int spawnScore = this.getScore() + 25;
+      int spawnScore = this.getScore() * 2;
       astArr.add(new Asteroid(spawnPointX, spawnPointY, random(0, TWO_PI), spawnSpeed, false,  spawnSize, spawnScore));
       astArr.add(new Asteroid(spawnPointX, spawnPointY, random(0, TWO_PI), spawnSpeed, false,  spawnSize, spawnScore));
     }

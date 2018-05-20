@@ -16,71 +16,71 @@ class Laser{
   }
   
   // Setters and Getters
-  void setLocation(float xPos, float yPos){
-    this.location.x = xPos;
-    this.location.y = yPos;
+  void setLocation(float iXLoc, float iYLoc){
+    this.location.x = iXLoc;
+    this.location.y = iYLoc;
   }
   
   PVector getLocationV(){
-    PVector loc = this.location;
-    return loc;
+    PVector lLoc = this.location;
+    return lLoc;
   }
   
   float getLocationX(){
-    float locX = this.location.x;
-    return locX;
+    float lLocX = this.location.x;
+    return lLocX;
   }
   
   float getLocationY(){
-    float locY = this.location.y;
-    return locY;
+    float lLocY = this.location.y;
+    return lLocY;
   }
   
-  void setVelocity(float xVel, float yVel){
-    this.velocity.x = xVel;
-    this.velocity.y = yVel;
+  void setVelocity(float iXVel, float iYVel){
+    this.velocity.x = iXVel;
+    this.velocity.y = iYVel;
   }
   
   PVector getVelocityV(){
-    PVector vel = this.velocity;
-    return vel;
+    PVector lVel = this.velocity;
+    return lVel;
   }
   
   float getVelocityX(){
-    float velX = this.velocity.x;
-    return velX;
+    float lVelX = this.velocity.x;
+    return lVelX;
   }
   
   float getVelocityY(){
-    float velY = this.velocity.y;
-    return velY;
+    float lVelY = this.velocity.y;
+    return lVelY;
   }
   
-  void setBearing(float bearingInput){
-    this.bearing = bearingInput;
+  void setBearing(float iBearing){
+    this.bearing = iBearing;
   }
   
   float getBearing(){
-    float b = this.bearing;
-    return b;
+    float lBearing = this.bearing;
+    return lBearing;
   }
   
-  void setSpeed(float speedInput){
-    this.speed = speedInput;
+  void setSpeed(float iSpeed){
+    this.speed = iSpeed;
   }
   
   float getSpeed(){
-    float sp = this.speed;
-    return sp;
+    float lSpeed = this.speed;
+    return lSpeed;
   }
   
-  void setSize(int sizeInput){
-    this.size = sizeInput;
+  void setSize(int iSize){
+    this.size = iSize;
   }
   
   int getSize(){
-    int s = this.size;
-    return s;
+    int lSize = this.size;
+    return lSize;
   }
   
   void move(){
@@ -89,7 +89,6 @@ class Laser{
   }
   
   void display(){
-    stroke(255);
     strokeWeight(5);
     point(this.getLocationX() , this.getLocationY());
   }
