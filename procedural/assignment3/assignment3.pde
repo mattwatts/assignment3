@@ -1,32 +1,13 @@
-//cosc101 assessment 3
-// Authors: Matthew Watts
-// Student Number: 9102134
-// Course: COSC101
-// Usage: To compile and run the program, load this .pde file in "Processing",
-//        and press the run button.
-// Purpose: This program implements "Assignment 3 - Asteroids!"
-// Further effects:
-//   teleport ship
-//   ship and asteroid explosions
-//   ship moves and accelerates with realistic physics
-//   forward and reverse thrust
-//   small, medium, and large asteroids
-//   smaller asteroids earn more points when shot
-//   shot asteroids spawn baby asteroids
-//     large spawns 2 medium
-//     medium spawns 2 small
-//   asteroids get faster on level up
-//   visible exhaust from ship thrusters
-//   medium asteroids are faster than larger asteroids
-//   small asteroids are faster than medium asteroids
-//   ship has multiple lives
-//   ship resets to stationary at screen centre on new life
-//   ship waits until screen centre is clear of asteroids before spawning new life
-//   if the spawning waits too long without centre becoming clear, the ship spawns anyway
-//   ship can have multiple laser bolts in flight simultaneously
-//   there's a slight pause before the ship can fire another laser bolt
-//   laser bolts travel for a number of pixels equal to screen height
-//   more asteroids appear on level up
+/*
+   COSC-101 - Assignment 3 - Asteroids!
+   Authors: Matthew Watts, Christopher Davidson, Marcus Girard
+   Student Number: MATT - 9102134, CHRIS - 220149871, MARCUS - **********
+   Course: COSC101
+   Usage: To compile and run the program, load this .pde file in "Processing",
+          and press the run button.
+   Purpose: This program implements COSC101 "Assignment 3 - Asteroids!"
+   Features: Described in accompanying "Asteroids Documentation.pdf"
+*/
 
         // current location of ship
 PVector shipLocation,
@@ -230,7 +211,7 @@ void draw(){
 
 void initGame() {
 // Purpose: initialise the PVectors
-  // pass 2 parameters to the PVector constructors so processing knows they're 2 dimensional
+  // pass 2 parameters to the PVector constructors to indicate 2 dimensional
   shipLocation = new PVector(0,0); 
   shipExplosionLocation = new PVector(0,0);
   alienLocation = new PVector(0,0);
@@ -531,7 +512,8 @@ void drawAsteroidExplosion() {
       fill(0,255,0);
       // draw frame of asteroid explosion animation
       ellipse(thePosition.x,thePosition.y,
-              asteroidExplosions[theExplosion-1],asteroidExplosions[theExplosion-1]);
+              asteroidExplosions[theExplosion-1],
+              asteroidExplosions[theExplosion-1]);
               
       // move to next frame of the asteroid explosion animaiton
       theExplosion--;
@@ -547,7 +529,8 @@ void drawAlienExplosion() {
     fill(255,0,0);
     // draw frame of alien explosion animation
     ellipse(alienExplosionLocation.x,alienExplosionLocation.y,
-            alienExplosions[alienExplosion-1],alienExplosions[alienExplosion-1]);
+            alienExplosions[alienExplosion-1],
+            alienExplosions[alienExplosion-1]);
     // move to next frame of the alien explosion animation
     alienExplosion--;
   }  
@@ -585,7 +568,8 @@ boolean detectAsteroidCentre() {
       
       // circular collision detection:
       // uses formula (x2-x1)^2 + (y1-y2)^2 <= (r1+r2)^2
-      if (sq(thePosition.x - (width/2)) + sq(thePosition.y - (height/2)) <= sq(tolerance)) {
+      if (sq(thePosition.x - (width/2)) + sq(thePosition.y - (height/2))
+           <= sq(tolerance)) {
         // asteroid is near centre
         fReturn = true;
       }
@@ -992,7 +976,7 @@ void moveLaser() {
     // game mode is "in progress"
     // move the laser bolts
     if (laserLocation.size() > 0) {
-      // traverse array in reverse order because we might drop elements from the array
+      // traverse array in reverse order in case we drop elements from the array
       for (int i=laserLocation.size()-1;i>=0;i--) {
         int isLaserOn = laserOn.get(i);
         if (isLaserOn > 0) {
@@ -1027,7 +1011,8 @@ void moveLaser() {
           isLaserOn--;
         
           // remove laser bolts where laserOn is zero
-          // the laser bolt has travelled for allowed number of frames, or has hit an asteroid
+          // the laser bolt has travelled for allowed number of frames
+          //  or has hit an asteroid
           if (isLaserOn < 1) {
             laserLocation.remove(i);
             laserVelocity.remove(i);
@@ -1063,7 +1048,8 @@ void fireLaser() {
   laserVelocity.add(theVelocity);
   laserOn.add(isLaserOn);
   
-  // we have just fired a laser bolt, so wait for a bit before another one can fire
+  // we have just fired a laser bolt
+  // wait for a bit before another one can fire
   framesSinceFire = 0;
 }
 
@@ -1240,7 +1226,8 @@ void keyPressed() {
     }
   } else {
     // game mode is "waiting to spawn" or "in progress"
-    // when game is in progress, record relevant key presses so user interface is responsive
+    // when game is in progress, record relevant key presses
+    //  so user interface is responsive
     if (key == CODED) {
       if (keyCode ==  LEFT) {
         leftPressed = true;
