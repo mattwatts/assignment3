@@ -1,7 +1,7 @@
 /*******************************************************************************
   COSC101 - Assignment 03 - Asteroids!
   Authors: Christopher Davidson, Matthew Watts, Marcus Girard
-  Student Numbers: CHRIS - 220149871, MATT - 9102134,<MARCUS' STUDENT NO>
+  Student Numbers: CHRIS - 220149871, MATT - 9102134, MARCUS - 220183425
   Course: COSC101 - Software Development Studio 1
   Desc: Asteroids Game, modelled after the ATARI 2600 version of 1974.
         A ship moves around the screen with UP,DOWN,LEFT and RIGHT Keys.

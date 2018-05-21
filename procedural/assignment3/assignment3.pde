@@ -1,7 +1,7 @@
 /*
    COSC-101 - Assignment 3 - Asteroids!
    Authors: Matthew Watts, Christopher Davidson, Marcus Girard
-   Student Number: MATT - 9102134, CHRIS - 220149871, MARCUS - **********
+   Student Number: MATT - 9102134, CHRIS - 220149871, MARCUS - 220183425
    Course: COSC101
    Usage: To compile and run the program, load this .pde file in "Processing",
           and press the run button.
