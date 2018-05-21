@@ -62,6 +62,7 @@ void setup(){
   //Initialise Asteroids and Controls
   instance.initAsteroids(enemies);
   initKeys();
+  println(instance.getMaxLives());
 }
 
 void draw(){
@@ -296,7 +297,7 @@ void detectLaserCollision(ArrayList projectile, AlienShip target, ArrayList hit)
     float distance = dist(lasX, lasY, alienShipX, alienShipY);
     if(distance <= (target.getSize() / 2) + tolerance){
       hit.add(new Explosion(alienShipX, alienShipY));
-      if(instance.getLives() < 6){
+      if(instance.getLives() < instance.getMaxLives()){
         instance.setLives(instance.getLives() + 1);
       }
       instance.setScoreCheck(instance.getScore() + 2500);
@@ -430,7 +431,7 @@ void levelRespawn(){
 *******************************************************************************/
 void resetScreen(){
   background(0);
-  instance.gameStateLabel();
+  instance.displayGameStateLabel();
   playerOne.resetShip();
   playerOne.display();
   for(Asteroid ast: enemies){
@@ -584,6 +585,7 @@ void keyPressed(){
     }  
   }
   if(instance.getPaused()){
+    //playerOne.teleport();
     if((key == ENTER) || (key == RETURN)){
       shots = new ArrayList();
       alienShots = new ArrayList();
